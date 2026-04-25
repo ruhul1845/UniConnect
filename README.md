@@ -20,9 +20,7 @@ git clone https://github.com/ruhul1845/UniConnect.git
 
 ### 2. Enter the Project Folder
 
-```bash
-cd uniConnect
-```
+
 
 ### 3. Install Dependencies
 
