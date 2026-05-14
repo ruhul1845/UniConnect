@@ -14,9 +14,16 @@ import Chat from './components/Chat';
 import UniLayout from './components/UniLayout';
 
 import ResourcesPage from './pages/ResourcesPage';
-import HousingPage from './pages/HousingPage';
+//import HousingPage from './pages/HousingPage';
 import SafetyPage from './pages/SafetyPage';
 import AdminPage from './pages/AdminPage';
+
+// Housing imports
+import HousingPage from './pages/housing/HousingPage.jsx';
+import HousingDetail from './pages/housing/HousingDetail.jsx';
+import PostHousing from './pages/housing/PostHousing.jsx';
+import MyHousingListings from './pages/housing/MyListings.jsx';
+
 
 function ProtectedPage({ session, children }) {
   if (!session) {
@@ -179,6 +186,53 @@ function App() {
           element={
             <ProtectedPage session={session}>
               <MyListings />
+            </ProtectedPage>
+          }
+        />
+
+        {/* Housing Routes */}
+
+        <Route
+          path="/housing"
+          element={
+            <ProtectedPage session={session}>
+              <HousingPage />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/housing/post"
+          element={
+            <ProtectedPage session={session}>
+              <PostHousing />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/housing/my-listings"
+          element={
+            <ProtectedPage session={session}>
+              <MyHousingListings />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/housing/edit/:id"
+          element={
+            <ProtectedPage session={session}>
+              <PostHousing />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/housing/:id"
+          element={
+            <ProtectedPage session={session}>
+              <HousingDetail />
             </ProtectedPage>
           }
         />
