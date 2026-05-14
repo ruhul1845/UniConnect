@@ -9,7 +9,7 @@ const navItems = [
     { to: '/marketplace', label: 'Marketplace' },
     { to: '/housing', label: 'Housing & To-Let' },
     { to: '/safety', label: 'Safety' },
-    { to: '/conversations', label: 'Chat' },
+
 ];
 
 const watchedTables = [
@@ -177,7 +177,7 @@ export default function Navbar({ session }) {
     return (
         <header className="sticky top-0 z-50 border-b border-blue-100 bg-white/95 shadow-sm backdrop-blur">
             <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-                <Link to="/" className="flex items-center gap-3 no-underline">
+                <Link to="/" className="hidden md:flex items-center gap-3 no-underline">
                     <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#18004d] text-sm font-black text-yellow-400 shadow-lg">
                         UC
                     </span>
@@ -198,8 +198,8 @@ export default function Navbar({ session }) {
                             key={item.to}
                             to={item.to}
                             className={({ isActive }) =>
-                                `rounded-full px-4 py-2 text-sm font-bold transition ${isActive
-                                    ? 'bg-[#18004d] text-white'
+                                ` px-4 py-2 text-sm font-bold transition ${isActive
+                                    ? 'border-b-2 border-[#18004d] text-[#18004d]'
                                     : 'text-slate-700 hover:bg-blue-50 hover:text-[#18004d]'
                                 }`
                             }
@@ -209,7 +209,77 @@ export default function Navbar({ session }) {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-3">
+
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setNotificationsOpen((prev) => !prev);
+                                setProfileOpen(false);
+                                markNotificationsRead();
+                            }}
+                            className="relative grid h-11 w-11 place-items-center  bg-white text-lg text-[#18004d] shadow-sm hover:bg-blue-50"
+                            title="Notifications"
+                        >
+                            🔔
+
+                            {unreadCount > 0 && (
+                                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {notificationsOpen && (
+                            <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-2xl">
+                                <div className="flex items-center justify-between border-b border-blue-100 px-4 py-3">
+                                    <h3 className="font-black text-[#18004d]">
+                                        Notifications
+                                    </h3>
+
+                                    {notifications.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={clearNotifications}
+                                            className="text-xs font-bold text-red-600 hover:text-red-700"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="max-h-96 overflow-y-auto p-3">
+                                    {notifications.length === 0 ? (
+                                        <p className="py-8 text-center text-sm text-slate-500">
+                                            No notifications yet.
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {notifications.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="rounded-2xl bg-blue-50 p-3"
+                                                >
+                                                    <p className="text-sm font-black text-[#18004d]">
+                                                        {item.title}
+                                                    </p>
+
+                                                    <p className="mt-1 text-xs text-slate-600">
+                                                        {item.description}
+                                                    </p>
+
+                                                    <p className="mt-2 text-[11px] font-semibold text-slate-400">
+                                                        {new Date(item.createdAt).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="relative">
                         <button
@@ -274,75 +344,7 @@ export default function Navbar({ session }) {
                             </div>
                         )}
                     </div>
-                    <div className="relative">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setNotificationsOpen((prev) => !prev);
-                                setProfileOpen(false);
-                                markNotificationsRead();
-                            }}
-                            className="relative grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-lg text-[#18004d] shadow-sm hover:bg-blue-50"
-                            title="Notifications"
-                        >
-                            🔔
 
-                            {unreadCount > 0 && (
-                                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white">
-                                    {unreadCount}
-                                </span>
-                            )}
-                        </button>
-
-                        {notificationsOpen && (
-                            <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-2xl">
-                                <div className="flex items-center justify-between border-b border-blue-100 px-4 py-3">
-                                    <h3 className="font-black text-[#18004d]">
-                                        Notifications
-                                    </h3>
-
-                                    {notifications.length > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={clearNotifications}
-                                            className="text-xs font-bold text-red-600 hover:text-red-700"
-                                        >
-                                            Clear
-                                        </button>
-                                    )}
-                                </div>
-
-                                <div className="max-h-96 overflow-y-auto p-3">
-                                    {notifications.length === 0 ? (
-                                        <p className="py-8 text-center text-sm text-slate-500">
-                                            No notifications yet.
-                                        </p>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {notifications.map((item) => (
-                                                <div
-                                                    key={item.id}
-                                                    className="rounded-2xl bg-blue-50 p-3"
-                                                >
-                                                    <p className="text-sm font-black text-[#18004d]">
-                                                        {item.title}
-                                                    </p>
-
-                                                    <p className="mt-1 text-xs text-slate-600">
-                                                        {item.description}
-                                                    </p>
-
-                                                    <p className="mt-2 text-[11px] font-semibold text-slate-400">
-                                                        {new Date(item.createdAt).toLocaleString()}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
 
 
@@ -353,6 +355,155 @@ export default function Navbar({ session }) {
                     >
                         ☰
                     </button>
+                </div>
+                <div className="flex w-full justify-between   md:hidden">
+
+
+
+                    <div >
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setProfileOpen((prev) => !prev);
+                                setNotificationsOpen(false);
+                            }}
+                            className="grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-[#18004d] shadow-sm transition hover:bg-blue-50"
+                            title="Profile"
+                        >
+                            <FaUserCircle className="text-3xl" />
+                        </button>
+
+                        {profileOpen && (
+                            <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-2xl">
+                                <div className="bg-gradient-to-r from-[#061A40] via-[#123C69] to-[#1E88E5] p-5 text-white">
+                                    <div className="grid h-14 w-14 place-items-center rounded-2xl bg-yellow-400 text-[#18004d]">
+                                        <FaUserCircle className="text-4xl" />
+                                    </div>
+
+                                    <h3 className="mt-3 font-black">
+                                        {displayName}
+                                    </h3>
+
+                                    <p className="mt-1 break-all text-xs text-blue-100">
+                                        {universityEmail}
+                                    </p>
+                                </div>
+
+                                <div className="p-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProfileOpen(false);
+                                            navigate('/my-listings');
+                                        }}
+                                        className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
+                                    >
+                                        My Listings
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProfileOpen(false);
+                                            navigate('/conversations');
+                                        }}
+                                        className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
+                                    >
+                                        My Chats
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={logout}
+                                        className="mt-2 w-full rounded-2xl bg-yellow-400 px-4 py-3 text-left text-sm font-black text-[#18004d] hover:bg-yellow-300"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    <div className="flex gap-3">
+                        <div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setNotificationsOpen((prev) => !prev);
+                                    setProfileOpen(false);
+                                    markNotificationsRead();
+                                }}
+                                className="relative grid h-11 w-11 place-items-center  bg-white text-lg text-[#18004d] shadow-sm hover:bg-blue-50"
+                                title="Notifications"
+                            >
+                                🔔
+
+                                {unreadCount > 0 && (
+                                    <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {notificationsOpen && (
+                                <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-2xl">
+                                    <div className="flex items-center justify-between border-b border-blue-100 px-4 py-3">
+                                        <h3 className="font-black text-[#18004d]">
+                                            Notifications
+                                        </h3>
+
+                                        {notifications.length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={clearNotifications}
+                                                className="text-xs font-bold text-red-600 hover:text-red-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="max-h-96 overflow-y-auto p-3">
+                                        {notifications.length === 0 ? (
+                                            <p className="py-8 text-center text-sm text-slate-500">
+                                                No notifications yet.
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {notifications.map((item) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className="rounded-2xl bg-blue-50 p-3"
+                                                    >
+                                                        <p className="text-sm font-black text-[#18004d]">
+                                                            {item.title}
+                                                        </p>
+
+                                                        <p className="mt-1 text-xs text-slate-600">
+                                                            {item.description}
+                                                        </p>
+
+                                                        <p className="mt-2 text-[11px] font-semibold text-slate-400">
+                                                            {new Date(item.createdAt).toLocaleString()}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setMobileOpen((prev) => !prev)}
+                            className="grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-xl text-[#18004d] lg:hidden"
+                        >
+                            ☰
+                        </button>
+                    </div>
                 </div>
             </nav>
 
