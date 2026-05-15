@@ -13,6 +13,7 @@ import Conversations from './components/Conversations';
 import Chat from './components/Chat';
 import UniLayout from './components/UniLayout';
 
+import SavedItems from './components/SavedItems';
 import ResourcesPage from './pages/ResourcesPage';
 import HousingPage from './pages/HousingPage';
 import SafetyPage from './pages/SafetyPage';
@@ -179,6 +180,15 @@ function App() {
           element={
             <ProtectedPage session={session}>
               <MyListings />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/saved-items"
+          element={
+            <ProtectedPage session={session}>
+              <SavedItems />
             </ProtectedPage>
           }
         />

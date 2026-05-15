@@ -15,6 +15,8 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingItem, setSavingItem] = useState(false);
 
   const getCurrentUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -53,10 +55,25 @@ export default function ProductDetails() {
     }
   }, [id, navigate]);
 
+  const fetchSavedStatus = useCallback(async (userId) => {
+    if (!userId || !id) return;
+    const { data } = await supabase
+      .from('saved_items')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('product_id', id)
+      .maybeSingle();
+    setIsSaved(!!data);
+  }, [id]);
+
   useEffect(() => {
-    getCurrentUser();
-    fetchProductDetails();
-  }, [getCurrentUser, fetchProductDetails]);
+    const init = async () => {
+      const user = await getCurrentUser();
+      await fetchProductDetails();
+      if (user) fetchSavedStatus(user.id);
+    };
+    init();
+  }, [getCurrentUser, fetchProductDetails, fetchSavedStatus]);
 
   const isSellerView = useMemo(() => Boolean(currentUser?.id && product?.seller_id && currentUser.id === product.seller_id), [currentUser, product]);
   const mainImage = images[selectedImageIndex]?.image_url || 'https://via.placeholder.com/900x650?text=UniConnect+Item';
@@ -72,6 +89,24 @@ export default function ProductDetails() {
       alert('Error updating status: ' + error.message);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const toggleSave = async () => {
+    if (!currentUser) { alert('Please login to save items.'); navigate('/login'); return; }
+    setSavingItem(true);
+    try {
+      if (isSaved) {
+        await supabase.from('saved_items').delete().eq('user_id', currentUser.id).eq('product_id', id);
+        setIsSaved(false);
+      } else {
+        await supabase.from('saved_items').insert([{ user_id: currentUser.id, product_id: id }]);
+        setIsSaved(true);
+      }
+    } catch (error) {
+      alert('Error saving item: ' + error.message);
+    } finally {
+      setSavingItem(false);
     }
   };
 
@@ -170,6 +205,15 @@ export default function ProductDetails() {
                 <div className="uc-card-actions">
                   <button className="uc-btn uc-btn-gold" onClick={startConversation} disabled={startingChat || product.status === 'sold'}>{startingChat ? 'Starting...' : 'Chat with Seller'}</button>
                   {(seller?.university_email || seller?.email) && <a className="uc-btn uc-btn-outline" href={`mailto:${seller.university_email || seller.email}?subject=Interested in ${product.title}`}>Email</a>}
+                  <button
+                    className="uc-btn uc-btn-outline"
+                    onClick={toggleSave}
+                    disabled={savingItem}
+                    title={isSaved ? 'Remove from saved items' : 'Save to wishlist'}
+                    style={{ minWidth: 44 }}
+                  >
+                    {savingItem ? '...' : isSaved ? '♥ Saved' : '♡ Save'}
+                  </button>
                 </div>
               ) : (
                 <div className="uc-card-actions">
