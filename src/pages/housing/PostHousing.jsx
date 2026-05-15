@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 
@@ -27,6 +27,7 @@ const EMPTY_FORM = {
   latitude: null,
   longitude: null,
   room_type: "Single Room",
+  department: "",
   contact: "",
   religion: "Any",
   images: [],
@@ -38,12 +39,14 @@ export default function PostHousing() {
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState(EMPTY_FORM);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [previewItems, setPreviewItems] = useState([]);
+  const [selectedPreviewIndex, setSelectedPreviewIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const objectUrlRefs = useRef([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const init = async () => {
@@ -83,13 +86,22 @@ export default function PostHousing() {
           latitude: data.latitude || null,
           longitude: data.longitude || null,
           room_type: data.room_type || "Single Room",
+          department: data.department || "",
           contact: data.contact || "",
           religion: data.religion || "Any",
           images: data.images || [],
         });
 
         if (data.images?.length > 0) {
-          setImagePreview(data.images[0]);
+          setPreviewItems(
+            data.images.map((url, index) => ({
+              id: `remote-${id}-${index}`,
+              src: url,
+              url,
+              isRemote: true,
+            }))
+          );
+          setSelectedPreviewIndex(0);
         }
       }
     };
@@ -107,13 +119,66 @@ export default function PostHousing() {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (!file) return;
+    const maxFiles = 5;
+    const availableSlots = maxFiles - previewItems.length;
+    if (availableSlots <= 0) {
+      setError(`You can upload up to ${maxFiles} images.`);
+      e.target.value = null;
+      return;
+    }
 
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    const newFiles = files.slice(0, availableSlots);
+    const newItems = newFiles.map((file) => {
+      const src = URL.createObjectURL(file);
+      objectUrlRefs.current.push(src);
+      return {
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        src,
+        file,
+        isRemote: false,
+      };
+    });
+
+    setPreviewItems((prev) => [...prev, ...newItems]);
+    setSelectedPreviewIndex((prev) => (prev === null ? 0 : prev));
+    e.target.value = null;
   };
+
+  const removeImage = (index) => {
+    const item = previewItems[index];
+    if (!item) return;
+
+    const nextItems = previewItems.filter((_, idx) => idx !== index);
+
+    if (!item.isRemote) {
+      URL.revokeObjectURL(item.src);
+      objectUrlRefs.current = objectUrlRefs.current.filter((url) => url !== item.src);
+    }
+
+    if (item.isRemote) {
+      setForm((prev) => ({
+        ...prev,
+        images: nextItems.filter((preview) => preview.isRemote).map((preview) => preview.url),
+      }));
+    }
+
+    setPreviewItems(nextItems);
+    setSelectedPreviewIndex((prev) => {
+      if (nextItems.length === 0) return 0;
+      if (prev >= nextItems.length) return nextItems.length - 1;
+      return prev;
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      objectUrlRefs.current.forEach(URL.revokeObjectURL);
+      objectUrlRefs.current = [];
+    };
+  }, []);
 
  const detectCurrentLocation = async () => {
   if (!navigator.geolocation) {
@@ -207,38 +272,43 @@ export default function PostHousing() {
   );
 };
  const uploadImages = async () => {
-  if (!imageFile) return form.images || [];
+  if (!previewItems.length) return [];
 
-  console.log("Uploading file:", imageFile);
+  const uploadedUrls = [];
 
-  const ext = imageFile.name.split(".").pop();
+  for (const item of previewItems) {
+    if (item.isRemote) {
+      uploadedUrls.push(item.url);
+      continue;
+    }
 
-  const fileName = `housing/${user.id}_${Date.now()}.${ext}`;
+    const ext = item.file.name.split(".").pop();
+    const fileName = `housing/${user.id}_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2)}.${ext}`;
 
-  console.log("PATH:", fileName);
+    const { data, error } = await supabase.storage
+      .from("housing-image")
+      .upload(fileName, item.file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
 
-  const { data, error } = await supabase.storage
-    .from("housing-image")
-    .upload(fileName, imageFile, {
-      cacheControl: "3600",
-      upsert: true,
-    });
+    if (error) {
+      throw error;
+    }
 
-  console.log("UPLOAD DATA:", data);
-  console.log("UPLOAD ERROR:", error);
+    const { data: publicUrlData } = supabase.storage
+      .from("housing-image")
+      .getPublicUrl(fileName);
 
-  if (error) {
-    throw error;
+    uploadedUrls.push(publicUrlData.publicUrl);
   }
 
-  const { data: publicUrlData } = supabase.storage
-    .from("housing-image")
-    .getPublicUrl(fileName);
-
-  console.log("PUBLIC URL:", publicUrlData.publicUrl);
-
-  return [publicUrlData.publicUrl];
+  return uploadedUrls;
 };
+  const imagePreviews = previewItems.map((item) => item.src);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -396,6 +466,16 @@ export default function PostHousing() {
               </Field>
             </div>
 
+            <Field label="Department">
+              <input
+                name="department"
+                value={form.department}
+                onChange={handleChange}
+                placeholder="e.g. CSE, EEE, BBA"
+                className={inputCls}
+              />
+            </Field>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field label="Room Type">
                 <select
@@ -447,40 +527,104 @@ export default function PostHousing() {
             </Field>
 
             <Field label="Room Photo">
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-[#0d1b4b] transition-colors cursor-pointer relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 transition-colors">
+                {imagePreviews.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <img
+                        src={imagePreviews[selectedPreviewIndex]}
+                        alt="Preview"
+                        className="h-40 w-full object-cover rounded-lg mx-auto"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(selectedPreviewIndex)}
+                        className="absolute top-3 right-3 bg-white/90 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow-sm hover:bg-white"
+                      >
+                        ×
+                      </button>
+                    </div>
 
-                {imagePreview ? (
-                  <div>
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="h-40 object-cover rounded-lg mx-auto mb-2"
-                    />
+                    {imagePreviews.length > 1 && (
+                      <div className="grid grid-cols-4 gap-2">
+                        {imagePreviews.map((src, index) => (
+                          <div key={src + index} className="relative h-16 rounded-xl overflow-hidden border">
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-1 right-1 z-10 bg-white/90 text-gray-700 rounded-full w-6 h-6 flex items-center justify-center shadow-sm hover:bg-white"
+                            >
+                              ×
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPreviewIndex(index)}
+                              className="h-full w-full"
+                            >
+                              <img src={src} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                    <p className="text-xs text-gray-400">
-                      Click to change photo
-                    </p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 rounded-lg bg-[#f5a623] text-[#0d1b4b] font-semibold hover:bg-[#e09010] transition-colors"
+                      >
+                        Add more images
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          previewItems.forEach((item) => {
+                            if (!item.isRemote) {
+                              URL.revokeObjectURL(item.src);
+                            }
+                          });
+                          setPreviewItems([]);
+                          setForm((prev) => ({ ...prev, images: [] }));
+                          setSelectedPreviewIndex(0);
+                        }}
+                        className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                      >
+                        Clear images
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="py-4">
+                  <div className="py-8">
                     <div className="text-4xl mb-2">📷</div>
 
                     <p className="text-sm text-gray-500">
-                      Click to upload a photo
+                      Upload up to 5 photos for your listing.
                     </p>
 
                     <p className="text-xs text-gray-400 mt-1">
-                      JPG, PNG, WEBP — max 5MB
+                      JPG, PNG, WEBP — max 5MB each
                     </p>
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-4 px-4 py-2 rounded-lg bg-[#f5a623] text-[#0d1b4b] font-semibold hover:bg-[#e09010] transition-colors"
+                    >
+                      Add images
+                    </button>
                   </div>
                 )}
               </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
             </Field>
 
             <div className="flex gap-3 pt-2">

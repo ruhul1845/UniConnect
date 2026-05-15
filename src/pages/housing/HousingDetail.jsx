@@ -13,6 +13,7 @@ export default function HousingDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,8 +71,11 @@ export default function HousingDetail() {
 
   const {
     title, description, price, location,
-    room_type, contact, image, religion, created_at,
+    room_type, department, contact, image, images, religion, created_at,
   } = listing;
+
+  const imageUrls = images?.length > 0 ? images : image ? [image] : [];
+  const primaryImage = imageUrls[selectedImageIndex] || PLACEHOLDER_IMAGE;
 
   const formattedDate = created_at
     ? new Date(created_at).toLocaleDateString("en-BD", { year: "numeric", month: "long", day: "numeric" })
@@ -79,6 +83,7 @@ export default function HousingDetail() {
 
   const infoItems = [
     { icon: "🏠", label: "Room Type", value: room_type },
+    { icon: "🎓", label: "Department", value: department },
     { icon: "📍", label: "Location", value: location },
     { icon: "💰", label: "Monthly Rent", value: `৳${Number(price).toLocaleString()}` },
     { icon: "🕌", label: "Religion Preference", value: religion || "Any" },
@@ -89,7 +94,7 @@ export default function HousingDetail() {
     <div className="min-h-screen bg-[#f4f6fb]">
       {/* Top bar */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-[#0d1b4b] hover:text-[#f5a623] font-medium transition-colors"
@@ -99,22 +104,24 @@ export default function HousingDetail() {
             </svg>
             All Listings
           </button>
-          {isOwner && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate(`/housing/edit/${id}`)}
-                className="px-4 py-1.5 text-sm border border-[#f5a623] text-[#c47f00] rounded-lg hover:bg-[#f5a623] hover:text-white transition-colors font-medium"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-1.5 text-sm border border-red-400 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors font-medium"
-              >
-                Delete
-              </button>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {isOwner && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => navigate(`/housing/edit/${id}`)}
+                  className="px-4 py-1.5 text-sm border border-[#f5a623] text-[#c47f00] rounded-lg hover:bg-[#f5a623] hover:text-white transition-colors font-medium"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-1.5 text-sm border border-red-400 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-colors font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -125,12 +132,36 @@ export default function HousingDetail() {
             {/* Hero Image */}
             <div className="rounded-2xl overflow-hidden shadow-md h-72">
               <img
-                src={image || PLACEHOLDER_IMAGE}
+                src={primaryImage || PLACEHOLDER_IMAGE}
                 alt={title}
                 className="w-full h-full object-cover"
                 onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
               />
             </div>
+
+            {imageUrls.length > 1 && (
+              <div className="grid grid-cols-4 gap-3 mt-4">
+                {imageUrls.map((src, index) => (
+                  <button
+                    key={`${src}-${index}`}
+                    type="button"
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`h-20 rounded-xl overflow-hidden border ${
+                      selectedImageIndex === index
+                        ? "border-[#0d1b4b]"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <img
+                      src={src}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Title + Badge */}
             <div>

@@ -22,7 +22,9 @@ export default function HousingCard({ listing, showOwnerActions, onEdit, onDelet
     price,
     location,
     room_type,
+    department,
     image,
+    images,
     religion,
     created_at,
   } = listing;
@@ -45,7 +47,7 @@ export default function HousingCard({ listing, showOwnerActions, onEdit, onDelet
       {/* Image */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={image || PLACEHOLDER_IMAGE}
+          src={images?.[0] || image || PLACEHOLDER_IMAGE}
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
@@ -82,6 +84,11 @@ export default function HousingCard({ listing, showOwnerActions, onEdit, onDelet
 
         {/* Tags Row */}
         <div className="flex flex-wrap gap-1.5 mb-4">
+          {department && (
+            <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+              {department}
+            </span>
+          )}
           {religion && religion !== "Any" && (
             <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
               {religion}
