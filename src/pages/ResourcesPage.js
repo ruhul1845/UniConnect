@@ -173,12 +173,26 @@ export default function ResourcesPage() {
       <main className="mx-auto w-full">
         <section className=" bg-gradient-to-r from-[#061A40] via-[#123C69] to-[#1E88E5] p-8 text-white shadow-2xl shadow-blue-950/20">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-300">Academic Resources</p>
-              <h1 className="mt-3 text-4xl font-black md:text-5xl">Find slides, books, papers, labs and projects</h1>
-              <p className="mt-4 max-w-2xl text-sm font-medium text-blue-100">
-                Filter by course, year, batch or semester.
-              </p>
+            <div className="flex justify-between  items-center py-8 px-10">
+              <div className="max-w-xl ">
+
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400 mb-2">
+                  Academic Resources
+                </p>
+
+
+                <h1 className="text-3xl md:text-5xl font-extrabold mb-3">
+                  Engaging Minds with Critical Analyses
+                </h1>
+
+
+                <p className="text-sm font-medium text-gray-300">
+                  Hands-on projects, thoughtful experiments, and scholarly insights. Filter by course, year, batch, or semester.
+                </p>
+              </div>
+              <div >
+
+              </div>
             </div>
             {canUploadResource && (
               <button onClick={() => setShowUploadModal(true)} className="rounded-full bg-yellow-400 px-7 py-4 font-black text-[#18004d] shadow-lg hover:bg-yellow-300">
@@ -197,7 +211,7 @@ export default function ResourcesPage() {
           ) : filteredResources.length === 0 ? (
             <EmptyState title="No resources found" subtitle="Try changing filters or upload resources if you are assigned as CR." />
           ) : (
-            <div className="grid grid-cols-1 gap-7 md:grid-cols-2 max-w-7xl mx-auto ">
+            <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 md:grid-cols-2 max-w-7xl mx-auto mb-4">
               {filteredResources.map((item) => (
                 <ResourceCard key={item.id || `${item.title}-${item.created_at}`} item={item} onPreview={() => previewResource(item)} onDownload={() => downloadResource(item)} />
               ))}
@@ -222,7 +236,7 @@ export default function ResourcesPage() {
 
 function EmptyState({ title, subtitle }) {
   return (
-    <div className="rounded-3xl border border-blue-100 bg-white p-10 text-center">
+    <div className="rounded-3xl border border-blue-100 bg-white p-10 text-center max-w-5xl min-h-base mx-auto">
       <h3 className="text-xl font-black text-[#18004d]">{title}</h3>
       {subtitle && <p className="mt-2 text-slate-500">{subtitle}</p>}
     </div>

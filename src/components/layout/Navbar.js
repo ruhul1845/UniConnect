@@ -219,7 +219,7 @@ export default function Navbar({ session }) {
                                 setProfileOpen(false);
                                 markNotificationsRead();
                             }}
-                            className="relative grid h-11 w-11 place-items-center  bg-white text-lg text-[#18004d] shadow-sm hover:bg-blue-50"
+                            className="relative grid h-11 w-11 place-items-center  text-[#18004d] "
                             title="Notifications"
                         >
                             🔔
@@ -288,7 +288,7 @@ export default function Navbar({ session }) {
                                 setProfileOpen((prev) => !prev);
                                 setNotificationsOpen(false);
                             }}
-                            className="grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-[#18004d] shadow-sm transition hover:bg-blue-50"
+                            className="grid h-11 w-11 place-items-center rounded-full  text-[#18004d] shadow-sm transition hover:bg-blue-50"
                             title="Profile"
                         >
                             <FaUserCircle className="text-3xl" />
