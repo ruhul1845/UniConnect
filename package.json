@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-<<<<<<< HEAD
-    "@supabase/supabase-js": "^2.105.4",
-=======
     "@babel/helper-replace-supers": "^7.28.6",
     "@babel/helper-skip-transparent-expression-wrappers": "^7.27.1",
     "@babel/helper-string-parser": "^7.27.1",
@@ -13,8 +10,7 @@
     "@babel/helper-validator-option": "^7.27.1",
     "@babel/helper-wrap-function": "^7.28.6",
     "@babel/helpers": "^7.29.2",
-    "@supabase/supabase-js": "^2.99.1",
->>>>>>> origin/main
+    "@supabase/supabase-js": "^2.105.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

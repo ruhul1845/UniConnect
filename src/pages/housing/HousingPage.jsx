@@ -65,7 +65,7 @@ export default function HousingPage() {
     }
   };
 
-  const quickFilters = ["Available Now", "Roommate Match", "Map View", "Near Campus"];
+  const quickFilters = ["Available Now", "Roommate Match", "Near Campus"];
 
   return (
     <div className="min-h-screen bg-[#f4f6fb]">
@@ -197,7 +197,7 @@ export default function HousingPage() {
                 key={f}
                 onClick={() => {
                   setQuickFilter(f);
-                  if (f === "Map View") navigate("/housing/map");
+                 
                   if (f === "My Posts") navigate("/housing/my-listings");
                 }}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
