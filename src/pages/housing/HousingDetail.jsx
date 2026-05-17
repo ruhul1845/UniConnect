@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import LocationMap from "../../components/housing/LocationMap";
 
-
+const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&q=80";
 
 export default function HousingDetail() {
   const { id } = useParams();
