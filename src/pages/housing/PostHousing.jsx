@@ -287,7 +287,7 @@ export default function PostHousing() {
       .toString(36)
       .slice(2)}.${ext}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from("housing-image")
       .upload(fileName, item.file, {
         cacheControl: "3600",
