@@ -3,12 +3,35 @@
 @tailwind utilities;
 
 @layer base {
+
+  /* Body text */
   body {
     @apply m-0 bg-slate-50 antialiased;
+    font-family: 'Charis SIL', serif;
+    /* main body text */
+    font-size: 1.125rem;
+    /* 18px globally */
+    line-height: 1.6;
   }
 
-  code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  /* Headings inherit body font or stay serif */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Charis SIL', serif;
+    /* headings same as body */
+  }
+
+  /* Code blocks */
+  code,
+  pre {
+    font-family: 'Space Grotesk', monospace;
+    /* monospace only */
+    font-size: 1rem;
+    /* 16px for code */
   }
 }
 
