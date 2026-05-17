@@ -92,6 +92,7 @@ export default function Marketplace() {
   }
 
   const filteredProducts = products.filter((p) => {
+    if (currentUser && p.seller_id === currentUser.id) return false;
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = p.title?.toLowerCase().includes(searchLower) || (p.description?.toLowerCase() || '').includes(searchLower);
     const matchesCategory = !filters.category || p.category_id === parseInt(filters.category, 10) || p.category?.name === filters.category;

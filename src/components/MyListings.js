@@ -11,6 +11,7 @@ export default function MyListings() {
   const [categories, setCategories] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState(null);
+  const [offerCounts, setOfferCounts] = useState({});
   const navigate = useNavigate();
 
   const getCurrentUser = useCallback(async () => {
@@ -48,14 +49,28 @@ export default function MyListings() {
     }
   }, [currentUser, getCurrentUser]);
 
+  const fetchOfferCounts = useCallback(async (userId) => {
+    const { data } = await supabase
+      .from('offers')
+      .select('product_id')
+      .eq('seller_id', userId)
+      .eq('status', 'pending');
+    const counts = {};
+    (data || []).forEach(row => { counts[row.product_id] = (counts[row.product_id] || 0) + 1; });
+    setOfferCounts(counts);
+  }, []);
+
   useEffect(() => {
     getCurrentUser();
     fetchCategories();
   }, [getCurrentUser, fetchCategories]);
 
   useEffect(() => {
-    if (currentUser) fetchUserProducts();
-  }, [currentUser, fetchUserProducts]);
+    if (currentUser) {
+      fetchUserProducts();
+      fetchOfferCounts(currentUser.id);
+    }
+  }, [currentUser, fetchUserProducts, fetchOfferCounts]);
 
   const handleDelete = async (productId) => {
     if (!window.confirm('Are you sure you want to delete this listing?')) return;
@@ -148,6 +163,12 @@ export default function MyListings() {
                         <button className="uc-btn uc-btn-blue" onClick={() => navigate(`/product/${product.id}`)}>View</button>
                         <button className="uc-btn uc-btn-outline" onClick={() => handleEditStart(product)}>Edit</button>
                         <button className="uc-btn uc-btn-outline" onClick={() => openProductConversations(product.id)}>Messages</button>
+                        <button
+                          className={offerCounts[product.id] ? 'uc-btn uc-btn-gold' : 'uc-btn uc-btn-outline'}
+                          onClick={() => navigate(`/offers/${product.id}`)}
+                        >
+                          Offers{offerCounts[product.id] ? ` (${offerCounts[product.id]})` : ''}
+                        </button>
                       </div>
                       <div className="uc-card-actions">
                         {['available', 'reserved', 'sold'].map((s) => <button key={s} className={product.status === s ? 'uc-btn uc-btn-gold' : 'uc-btn uc-btn-outline'} disabled={updatingStatus === product.id} onClick={() => updateProductStatus(product.id, s)}>{s}</button>)}
