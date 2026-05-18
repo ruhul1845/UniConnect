@@ -13,6 +13,8 @@ import Conversations from './components/Conversations';
 import Chat from './components/Chat';
 import UniLayout from './components/UniLayout';
 
+import SavedItems from './components/SavedItems';
+import SellerOffers from './components/SellerOffers';
 import ResourcesPage from './pages/ResourcesPage';
 //import HousingPage from './pages/HousingPage';
 import SafetyPage from './pages/SafetyPage';
@@ -233,6 +235,24 @@ function App() {
           element={
             <ProtectedPage session={session}>
               <HousingDetail />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/saved-items"
+          element={
+            <ProtectedPage session={session}>
+              <SavedItems />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/offers/:productId"
+          element={
+            <ProtectedPage session={session}>
+              <SellerOffers />
             </ProtectedPage>
           }
         />

@@ -14,7 +14,7 @@ const fallbackCategories = [
 export default function SellItem() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', price: '', category_id: '', condition: 'Good', location: '' });
 
@@ -25,6 +25,15 @@ export default function SellItem() {
     };
     getCategories();
   }, []);
+
+  const handleImageChange = (e) => {
+    const selected = Array.from(e.target.files || []).slice(0, 5);
+    setImageFiles(selected);
+  };
+
+  const removeImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleUpload = async (file, productId) => {
     const fileExt = file.name.split('.').pop();
@@ -57,9 +66,9 @@ export default function SellItem() {
         .single();
       if (pError) throw pError;
 
-      if (imageFile) {
-        const publicUrl = await handleUpload(imageFile, product.id);
-        const { error: imgError } = await supabase.from('product_images').insert([{ product_id: product.id, image_url: publicUrl, is_primary: true }]);
+      for (let i = 0; i < imageFiles.length; i++) {
+        const publicUrl = await handleUpload(imageFiles[i], product.id);
+        const { error: imgError } = await supabase.from('product_images').insert([{ product_id: product.id, image_url: publicUrl, is_primary: i === 0 }]);
         if (imgError) throw imgError;
       }
 
@@ -74,7 +83,7 @@ export default function SellItem() {
 
   return (
     <>
-      <PageHero eyebrow="Student marketplace" title="Sell an Item" subtitle="Create a verified CSE marketplace listing with item image, price, category and pickup location." />
+      <PageHero eyebrow="Student marketplace" title="Sell an Item" subtitle="Create a verified CSE marketplace listing with item images, price, category and pickup location." />
       <main className="uc-content">
         <form onSubmit={handleSubmit} className="uc-card uc-card-pad uc-wide-form">
           <div className="uc-section-head compact">
@@ -92,8 +101,34 @@ export default function SellItem() {
             <div><label className="uc-label">Category</label><select className="uc-select" value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} required><option value="">Select Category</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             <div><label className="uc-label">Condition</label><select className="uc-select" value={formData.condition} onChange={(e) => setFormData({ ...formData, condition: e.target.value })}><option>New</option><option>Like New</option><option>Good</option><option>Fair</option><option>Poor</option></select></div>
             <div><label className="uc-label">Pickup Location</label><input className="uc-input" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Hall, campus gate, department lobby" /></div>
-            <div><label className="uc-label">Upload Image</label><input className="uc-input" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} /></div>
+            <div>
+              <label className="uc-label">Upload Images (up to 5)</label>
+              <input className="uc-input" type="file" accept="image/*" multiple onChange={handleImageChange} />
+              <p style={{ fontSize: 12, color: '#888', marginTop: 4 }}>First image will be the cover photo.</p>
+            </div>
           </div>
+
+          {imageFiles.length > 0 && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+              {imageFiles.map((file, i) => (
+                <div key={i} style={{ position: 'relative', width: 90, height: 90 }}>
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={`preview ${i + 1}`}
+                    style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 10, border: '2px solid #e2e8f0' }}
+                  />
+                  {i === 0 && (
+                    <span style={{ position: 'absolute', bottom: 4, left: 4, background: '#F6B800', color: '#18004d', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 6 }}>Cover</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    style={{ position: 'absolute', top: 2, right: 2, background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: 12, lineHeight: '20px', textAlign: 'center', padding: 0 }}
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <label className="uc-label" style={{ marginTop: 16 }}>Description</label>
           <textarea className="uc-textarea" rows="5" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Mention usage history, damages, accessories, warranty, etc." />

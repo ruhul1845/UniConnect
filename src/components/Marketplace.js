@@ -23,12 +23,32 @@ export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({ category: '', minPrice: '', maxPrice: '', condition: '' });
   const [sortBy, setSortBy] = useState('newest');
+  const [savedIds, setSavedIds] = useState(new Set());
+  const [currentUser, setCurrentUser] = useState(null);
+  const [savingId, setSavingId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCategories();
     fetchProducts();
+    initUser();
   }, []);
+
+  async function initUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentUser(user);
+      fetchSavedIds(user.id);
+    }
+  }
+
+  async function fetchSavedIds(userId) {
+    const { data } = await supabase
+      .from('saved_items')
+      .select('product_id')
+      .eq('user_id', userId);
+    if (data) setSavedIds(new Set(data.map((r) => r.product_id)));
+  }
 
   async function fetchCategories() {
     const { data } = await supabase.from('categories').select('*').order('name');
@@ -50,7 +70,29 @@ export default function Marketplace() {
     setProducts(data?.length ? data : fallbackProducts);
   }
 
+  async function toggleSave(e, productId) {
+    e.stopPropagation();
+    if (!currentUser) { navigate('/login'); return; }
+    if (String(productId).startsWith('demo')) return;
+
+    setSavingId(productId);
+    try {
+      if (savedIds.has(productId)) {
+        await supabase.from('saved_items').delete().eq('user_id', currentUser.id).eq('product_id', productId);
+        setSavedIds((prev) => { const next = new Set(prev); next.delete(productId); return next; });
+      } else {
+        await supabase.from('saved_items').insert([{ user_id: currentUser.id, product_id: productId }]);
+        setSavedIds((prev) => new Set([...prev, productId]));
+      }
+    } catch (err) {
+      alert('Error saving item: ' + err.message);
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   const filteredProducts = products.filter((p) => {
+    if (currentUser && p.seller_id === currentUser.id) return false;
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = p.title?.toLowerCase().includes(searchLower) || (p.description?.toLowerCase() || '').includes(searchLower);
     const matchesCategory = !filters.category || p.category_id === parseInt(filters.category, 10) || p.category?.name === filters.category;
@@ -69,7 +111,11 @@ export default function Marketplace() {
         eyebrow="Dorm-to-dorm marketplace"
         title="Student Marketplace"
         subtitle="Buy and sell CSE-specific hardware, books, software licenses and academic items with verified seller profiles and in-app chat."
-        actions={<><button className="uc-btn uc-btn-gold" onClick={() => navigate('/my-listings')}>My Listings</button><button className="uc-btn uc-btn-gold" onClick={() => navigate('/sell')}>Sell an Item</button></>}
+        actions={<>
+          <button className="uc-btn uc-btn-outline" onClick={() => navigate('/saved-items')}>♡ Saved Items {savedIds.size > 0 && `(${savedIds.size})`}</button>
+          <button className="uc-btn uc-btn-gold" onClick={() => navigate('/my-listings')}>My Listings</button>
+          <button className="uc-btn uc-btn-gold" onClick={() => navigate('/sell')}>Sell an Item</button>
+        </>}
       />
       <main className="uc-content">
         <section className="uc-filter-panel">
@@ -118,19 +164,49 @@ export default function Marketplace() {
           </section>
         ) : (
           <section className="uc-grid-4">
-            {filteredProducts.map((p) => (
-              <article key={p.id} className="uc-card" onClick={() => String(p.id).startsWith('demo') ? null : navigate(`/product/${p.id}`)} style={{ cursor: 'pointer' }}>
-                <img className="uc-product-img" src={p.images?.[0]?.image_url || 'https://via.placeholder.com/400x260?text=UniConnect'} alt={p.title || 'Marketplace item'} />
-                <div className="uc-product-info">
-                  <span className="uc-badge uc-badge-blue">{p.category?.name || 'Marketplace'}</span>
-                  <h3 style={{ marginTop: 12 }}>{p.title}</h3>
-                  <p className="uc-price">৳{Number(p.price || 0).toLocaleString()}</p>
-                  <p><strong>Condition:</strong> {p.condition || 'Good'}</p>
-                  <p>{p.description?.substring(0, 88)}{p.description?.length > 88 ? '...' : ''}</p>
-                  <div className="uc-card-actions"><button className="uc-btn uc-btn-blue">View Details</button><button className="uc-btn uc-btn-outline">Chat</button></div>
-                </div>
-              </article>
-            ))}
+            {filteredProducts.map((p) => {
+              const isDemo = String(p.id).startsWith('demo');
+              const isSaved = savedIds.has(p.id);
+              return (
+                <article
+                  key={p.id}
+                  className="uc-card"
+                  onClick={() => isDemo ? null : navigate(`/product/${p.id}`)}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    <img className="uc-product-img" src={p.images?.[0]?.image_url || 'https://via.placeholder.com/400x260?text=UniConnect'} alt={p.title || 'Marketplace item'} />
+                    {!isDemo && (
+                      <button
+                        onClick={(e) => toggleSave(e, p.id)}
+                        disabled={savingId === p.id}
+                        title={isSaved ? 'Remove from saved' : 'Save item'}
+                        style={{
+                          position: 'absolute', top: 10, right: 10,
+                          background: isSaved ? '#F6B800' : 'rgba(255,255,255,0.9)',
+                          border: 'none', borderRadius: '50%',
+                          width: 36, height: 36, cursor: 'pointer',
+                          fontSize: 18, lineHeight: '36px', textAlign: 'center',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)', padding: 0,
+                          color: isSaved ? '#18004d' : '#888',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {isSaved ? '♥' : '♡'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="uc-product-info">
+                    <span className="uc-badge uc-badge-blue">{p.category?.name || 'Marketplace'}</span>
+                    <h3 style={{ marginTop: 12 }}>{p.title}</h3>
+                    <p className="uc-price">৳{Number(p.price || 0).toLocaleString()}</p>
+                    <p><strong>Condition:</strong> {p.condition || 'Good'}</p>
+                    <p>{p.description?.substring(0, 88)}{p.description?.length > 88 ? '...' : ''}</p>
+                    <div className="uc-card-actions"><button className="uc-btn uc-btn-blue">View Details</button><button className="uc-btn uc-btn-outline">Chat</button></div>
+                  </div>
+                </article>
+              );
+            })}
           </section>
         )}
       </main>
