@@ -1,129 +1,219 @@
-import { useEffect, useState, useRef } from 'react';
-import useNotifications from '../hook/useNotifications';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../supabaseClient';
 
-/**
- * HomeNotificationFeed - Displays 15 latest notifications with auto-scroll animation
- */
-export function HomeNotificationFeed({ session }) {
-    const { notifications, isInitialized, error } = useNotifications(session);
-    const scrollContainerRef = useRef(null);
-    const [displayedNotifs, setDisplayedNotifs] = useState([]);
+export default function HomeNotificationFeed() {
+    const [currentSession, setCurrentSession] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Update displayed notifications
+    // Get logged-in session directly from Supabase
     useEffect(() => {
-        setDisplayedNotifs(notifications.slice(0, 15));
-    }, [notifications]);
+        const getCurrentSession = async () => {
+            const { data, error } = await supabase.auth.getSession();
 
-    // Auto-scroll effect - notifications slide up
-    useEffect(() => {
-        if (displayedNotifs.length === 0 || !scrollContainerRef.current) return;
-
-        const container = scrollContainerRef.current;
-        let scrollInterval;
-        let direction = 1; // 1 for down, -1 for up
-
-        const scroll = () => {
-            const maxScroll = container.scrollHeight - container.clientHeight;
-            const currentScroll = container.scrollTop;
-
-            // Change direction at edges
-            if (currentScroll >= maxScroll - 10) {
-                direction = -1; // scroll up
-            } else if (currentScroll <= 10) {
-                direction = 1; // scroll down
+            if (error) {
+                console.error('Get session error:', error.message);
+                setCurrentSession(null);
+            } else {
+                setCurrentSession(data.session);
             }
-
-            container.scrollTop += direction * 2;
         };
 
-        // Start auto-scroll
-        scrollInterval = setInterval(scroll, 50);
+        getCurrentSession();
 
-        // Pause on hover
-        const pauseScroll = () => clearInterval(scrollInterval);
-        const resumeScroll = () => {
-            scrollInterval = setInterval(scroll, 50);
-        };
-
-        container.addEventListener('mouseenter', pauseScroll);
-        container.addEventListener('mouseleave', resumeScroll);
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            setCurrentSession(session);
+        });
 
         return () => {
-            clearInterval(scrollInterval);
-            container.removeEventListener('mouseenter', pauseScroll);
-            container.removeEventListener('mouseleave', resumeScroll);
+            subscription.unsubscribe();
         };
-    }, [displayedNotifs]);
+    }, []);
 
-    const colorMap = {
-        blue: 'border-blue-200 bg-blue-50 text-blue-900',
-        purple: 'border-purple-200 bg-purple-50 text-purple-900',
-        green: 'border-green-200 bg-green-50 text-green-900',
-        red: 'border-red-200 bg-red-50 text-red-900',
+    useEffect(() => {
+        if (!currentSession?.user?.id) {
+            setLoading(false);
+            return;
+        }
+
+        const userId = currentSession.user.id;
+
+        const fetchNotifications = async () => {
+            try {
+                setLoading(true);
+
+                const { data, error } = await supabase
+                    .from('notifications')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                setNotifications(data || []);
+            } catch (error) {
+                console.error('Home notification fetch error:', error.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchNotifications();
+
+        const channel = supabase
+            .channel(`home-notifications-${userId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${userId}`,
+                },
+                (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        setNotifications((prev) => [payload.new, ...prev].slice(0, 10));
+                    }
+
+                    if (payload.eventType === 'UPDATE') {
+                        setNotifications((prev) =>
+                            prev.map((item) =>
+                                item.id === payload.new.id ? payload.new : item
+                            )
+                        );
+                    }
+
+                    if (payload.eventType === 'DELETE') {
+                        setNotifications((prev) =>
+                            prev.filter((item) => item.id !== payload.old.id)
+                        );
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [currentSession?.user?.id]);
+
+    const slideItems = useMemo(() => {
+        if (notifications.length <= 3) return notifications;
+        return [...notifications, ...notifications];
+    }, [notifications]);
+
+    const formatDate = (dateValue) => {
+        if (!dateValue) return { day: '--', month: '---' };
+
+        const date = new Date(dateValue);
+
+        return {
+            day: date.getDate(),
+            month: date.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
+        };
     };
 
     return (
-        <section className="uc-section">
-            <div className="uc-section-head">
-                <div>
-                    <p className="uc-eyebrow">Real-time Updates</p>
-                    <h2>Latest Activity</h2>
-                </div>
-                <p className="text-sm text-slate-600">
-                    {error
-                        ? 'Notification error'
-                        : isInitialized
-                            ? `${displayedNotifs.length} recent update${displayedNotifs.length !== 1 ? 's' : ''}`
-                            : 'Loading...'}
+        <div className="overflow-hidden rounded-[28px] border border-blue-100 bg-white shadow-xl">
+            <style>
+                {`
+          @keyframes notificationSlideUp {
+            0% {
+              transform: translateY(0);
+            }
+            100% {
+              transform: translateY(-50%);
+            }
+          }
+        `}
+            </style>
+
+            <div className="p-6 pb-4">
+                <p className="tracking-[0.35em] text-sm font-black uppercase text-yellow-500">
+                    Official Notices
                 </p>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                    <h3 className="text-xl font-black text-[#18004d]">Latest Updates</h3>
+
+                    {notifications.length > 0 && (
+                        <span className="rounded-full bg-yellow-400 px-3 py-1 text-xs font-black text-[#18004d]">
+                            {notifications.length}
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {error ? (
-                <div className="rounded-3xl border border-red-100 bg-red-50 p-8 text-center">
-                    <p className="text-sm font-semibold text-red-700">Could not load notifications.</p>
-                </div>
-            ) : !isInitialized ? (
-                <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8 text-center">
-                    <p className="text-sm font-semibold text-slate-600">Initializing notifications...</p>
-                </div>
-            ) : displayedNotifs.length === 0 ? (
-                <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8 text-center">
-                    <p className="text-4xl">🔔</p>
-                    <p className="mt-3 text-sm text-slate-600">
-                        No activity yet. Check back soon!
-                    </p>
-                </div>
-            ) : (
-                <div
-                    ref={scrollContainerRef}
-                    className="max-h-96 overflow-y-auto rounded-3xl border border-blue-100 bg-white shadow-lg space-y-2 p-4 hover:overflow-y-auto"
-                    style={{ scrollBehavior: 'smooth' }}
-                >
-                    {displayedNotifs.map((notif) => {
-                        const colorClass = colorMap[notif.color] || colorMap.blue;
-                        return (
+            <div className="relative h-[410px] overflow-hidden px-4 pb-5">
+                {loading ? (
+                    <div className="space-y-3">
+                        {[1, 2, 3, 4].map((item) => (
                             <div
-                                key={notif.id}
-                                className={`border rounded-2xl p-4 transform transition-all duration-300 hover:scale-105 ${colorClass}`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <span className="text-3xl flex-shrink-0">{notif.icon}</span>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-black text-sm truncate">{notif.title}</p>
-                                        <p className="mt-1 text-xs leading-relaxed">{notif.description}</p>
-                                        <p className="mt-2 text-[10px] opacity-60">
-                                            {new Date(notif.createdAt).toLocaleString()}
+                                key={item}
+                                className="h-24 animate-pulse rounded-2xl bg-blue-50"
+                            />
+                        ))}
+                    </div>
+                ) : !currentSession?.user?.id ? (
+                    <div className="rounded-2xl bg-blue-50 p-5 text-sm font-bold text-slate-600">
+                        Login to see your latest notifications.
+                    </div>
+                ) : notifications.length === 0 ? (
+                    <div className="rounded-2xl bg-blue-50 p-5 text-sm font-bold text-slate-600">
+                        No notifications yet.
+                    </div>
+                ) : (
+                    <div
+                        className={`space-y-3 ${notifications.length > 3
+                                ? 'animate-[notificationSlideUp_18s_linear_infinite] hover:[animation-play-state:paused]'
+                                : ''
+                            }`}
+                    >
+                        {slideItems.map((notif, index) => {
+                            const date = formatDate(notif.created_at);
+
+                            return (
+                                <div
+                                    key={`${notif.id}-${index}`}
+                                    className="flex items-center gap-4 rounded-2xl bg-blue-50 p-4 shadow-sm transition hover:bg-yellow-50"
+                                >
+                                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-yellow-400 text-center text-[#18004d]">
+                                        <span className="leading-none">
+                                            <strong className="block text-sm font-black">
+                                                {date.day}
+                                            </strong>
+                                            <small className="block text-[9px] font-black">
+                                                {date.month}
+                                            </small>
+                                        </span>
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="line-clamp-1 text-sm font-black text-[#18004d]">
+                                            {notif.title || 'Notification'}
+                                        </h4>
+
+                                        <p className="mt-1 line-clamp-2 text-sm font-bold leading-6 text-[#18004d]">
+                                            {notif.message || 'New update available.'}
                                         </p>
                                     </div>
-                                    <div className="flex-shrink-0 text-lg">📌</div>
+
+                                    {!notif.is_read && (
+                                        <span className="h-3 w-3 shrink-0 rounded-full bg-red-500" />
+                                    )}
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </section>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {notifications.length > 3 && (
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent" />
+                )}
+            </div>
+        </div>
     );
 }
-
-export default HomeNotificationFeed;

@@ -105,6 +105,16 @@ export default function Navbar({ session }) {
         <>
             <header className="sticky top-0 z-50 border-b border-blue-100 bg-white/95 shadow-sm backdrop-blur">
                 <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+                    {/* Mobile menu button - left side only on sm */}
+                    <button
+                        type="button"
+                        onClick={() => setMobileOpen((prev) => !prev)}
+                        className="grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-xl text-[#18004d] md:hidden"
+                    >
+                        ☰
+                    </button>
+
+                    {/* Logo - hidden on sm, visible md+ */}
                     <Link to="/" className="hidden md:flex items-center gap-3 no-underline">
                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#18004d] text-sm font-black text-yellow-400 shadow-lg">
                             UC
@@ -115,13 +125,14 @@ export default function Navbar({ session }) {
                         </span>
                     </Link>
 
+                    {/* Desktop nav links */}
                     <div className="hidden items-center gap-1 lg:flex">
                         {navItems.map((item) => (
                             <NavLink
                                 key={item.to}
                                 to={item.to}
                                 className={({ isActive }) =>
-                                    ` px-4 py-2 text-sm font-bold transition ${isActive
+                                    `px-4 py-2 text-sm font-bold transition ${isActive
                                         ? 'border-b-2 border-[#18004d] text-[#18004d]'
                                         : 'text-slate-700 hover:bg-blue-50 hover:text-[#18004d]'
                                     }`
@@ -132,7 +143,8 @@ export default function Navbar({ session }) {
                         ))}
                     </div>
 
-                    <div className="hidden md:flex items-center gap-3">
+                    {/* Right side: notification + profile + md menu */}
+                    <div className="flex items-center gap-3">
                         {/* Notifications Button */}
                         <div className="relative">
                             <button
@@ -177,7 +189,6 @@ export default function Navbar({ session }) {
                                 <FaUserCircle className="text-3xl" />
                             </button>
 
-                            {/* Profile Dropdown */}
                             {profileOpen && (
                                 <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-2xl">
                                     <div className="bg-gradient-to-r from-[#061A40] via-[#123C69] to-[#1E88E5] p-5 text-white">
@@ -223,11 +234,11 @@ export default function Navbar({ session }) {
                             )}
                         </div>
 
-                        {/* Mobile toggle */}
+                        {/* Tablet menu button - md only, hidden lg */}
                         <button
                             type="button"
                             onClick={() => setMobileOpen((prev) => !prev)}
-                            className="grid h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-xl text-[#18004d] lg:hidden"
+                            className="hidden h-11 w-11 place-items-center rounded-full border border-blue-100 bg-white text-xl text-[#18004d] md:grid lg:hidden"
                         >
                             ☰
                         </button>
