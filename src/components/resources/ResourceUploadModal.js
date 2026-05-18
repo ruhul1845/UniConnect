@@ -68,8 +68,14 @@ export default function ResourceUploadModal({ form, options, uploading, onChange
             )}
           </div>
 
-          <div className="rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
-            <strong className="text-[#18004d]">Note:</strong> Only CR/Admin users can upload. CR access is checked from <code>profiles.role/is_cr</code> and the existing <code>cr.university_email</code> table.
+          <div className="rounded-2xl bg-gray-100  borser p-4 text-sm text-black">
+            <p className="font-bold">Upload Guidelines:</p>
+            <ul className="list-inside list-disc">
+              <li>Only PDF files are accepted & size up to 25 MB.</li>
+              <li>Ensure the title is descriptive and includes lecture numbers if applicable.</li>
+              <li>For books, include author and edition information for better discoverability.</li>
+              <li>Projects should have a valid GitHub link with a clear README.</li>
+            </ul>
           </div>
 
           <div className="flex justify-end gap-3">

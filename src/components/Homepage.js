@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
+import HomeNotificationFeed from './HomeNotificationFeed';
 
 const features = [
-  ['📚', 'Academic Resources', 'Batch-wise slides, books, lab sheets, mid-term and final question banks.', '/resources'],
-  ['🛒', 'Student Marketplace', 'Buy and sell hardware, textbooks, software licenses and academic items.', '/marketplace'],
-  ['🏠', 'Housing & To-Let', 'Find flats, sublets and compatible roommates near campus.', '/housing'],
-  ['🚨', 'Safety SOS', 'Emergency contacts, SOS trigger guidance and recent safety alerts.', '/safety'],
+  ['📚', 'Academic Resources', 'Batch-wise slides, books, lab sheets, mid-term and final question banks.'],
+  ['🛒', 'Student Marketplace', 'Buy and sell hardware, textbooks, software licenses and academic items.'],
+  ['🏠', 'Housing & To-Let', 'Find flats, sublets and compatible roommates near campus.'],
+  ['🚨', 'Safety SOS', 'Emergency contacts, SOS trigger guidance and recent safety alerts.'],
 ];
 
 const notices = [
@@ -16,12 +17,16 @@ const notices = [
 
 const news = [
   ['Resource Archive Upgraded', 'New batch, semester and course-wise resource navigation is available.', 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80'],
-  ['Project Showcase', 'Students can share GitHub project links in the Wall of Fame.', 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80'],
+  ['Electronics Marketplace',
+    'Find affordable laptops, books, calculators, and other student essentials.',
+    "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=900&q=80",],
   ['Housing Support', 'Find nearby seats, sublets and roommate matches with schedule compatibility.', 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80'],
   ['Safety First', 'SOS guidance and emergency support are available from one dedicated route.', 'https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&w=900&q=80'],
 ];
 
 export default function Homepage() {
+  const { session } = useOutletContext() || {};
+
   return (
     <>
       <section className="uc-home-hero">
@@ -43,31 +48,35 @@ export default function Homepage() {
         <div className="uc-stat"><strong>24/7</strong><span>Safety Support</span></div>
       </div>
 
+      {/* Real-time Notifications Feed */}
+      {session && <HomeNotificationFeed session={session} />}
+
       <section className="uc-section">
         <div className="uc-section-head">
           <div>
             <p className="uc-eyebrow">Quick access</p>
             <h2>Everything students need in one portal</h2>
-            <p className="uc-section-sub">The homepage follows a university website style: strong hero banner, floating stats, neat cards, notices and news sections.</p>
           </div>
         </div>
         <div className="uc-grid-4">
           {features.map(([icon, title, text, link]) => (
-            <Link to={link} className="uc-card uc-feature" key={title}>
+            <div
+              className="uc-card py-4 px-5 cursor-pointer transition-all duration-300 hover:shadow-[0_0_20px_rgba(250,204,21,0.35)]"
+              key={title}
+            >
               <span className="uc-icon">{icon}</span>
               <h3>{title}</h3>
               <p>{text}</p>
-              <div className="uc-card-actions"><span className="uc-badge">Open route →</span></div>
-            </Link>
+            </div>
           ))}
         </div>
-      </section>
+      </section >
+
 
       <section className="uc-section" style={{ paddingTop: 0 }}>
         <div className="uc-grid-3" style={{ alignItems: 'start' }}>
           <div style={{ gridColumn: 'span 2' }}>
             <h2>Department News & Events</h2>
-            <p className="uc-section-sub">Clean card-based news layout similar to a modern university portal.</p>
             <div className="uc-grid-2" style={{ marginTop: 24 }}>
               {news.map(([title, text, img]) => (
                 <article className="uc-card" key={title}>

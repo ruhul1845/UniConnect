@@ -195,7 +195,7 @@ export default function ResourcesPage() {
               </div>
             </div>
             {canUploadResource && (
-              <button onClick={() => setShowUploadModal(true)} className="rounded-full bg-yellow-400 px-7 py-4 font-black text-[#18004d] shadow-lg hover:bg-yellow-300">
+              <button onClick={() => setShowUploadModal(true)} className="rounded-full bg-yellow-400 px-4 py-3 font-black text-[#18004d] shadow-lg hover:bg-yellow-300">
                 Upload Resource
               </button>
             )}
