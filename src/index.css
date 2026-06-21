@@ -291,6 +291,10 @@
     @apply relative grid min-h-screen place-items-center overflow-hidden bg-[#061A40] p-6;
   }
 
+  .uc-auth-overlay {
+    @apply fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-slate-950/60 p-6 backdrop-blur-sm;
+  }
+
   /* Stylish background */
   .uc-auth-wrap::before {
     content: '';
@@ -316,31 +320,10 @@
   }
 
   /* Animated circular blue/gold glow around card */
-  .uc-auth-card::before {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    z-index: -1;
-    border-radius: 1.7rem;
-    background:
-      conic-gradient(from 0deg,
-        #1E88E5,
-        #38BDF8,
-        #FACC15,
-        #1E88E5,
-        #061A40,
-        #1E88E5);
-    animation: uc-auth-spin 4s linear infinite;
-  }
-
-  /* Inner mask so the glow stays like a border */
+  .uc-auth-card::before,
   .uc-auth-card::after {
-    content: '';
-    position: absolute;
-    inset: 3px;
-    z-index: -1;
-    border-radius: 1.55rem;
-    background: rgba(255, 255, 255, 0.96);
+    content: none;
+    display: none;
   }
 
   .uc-auth-card h2 {

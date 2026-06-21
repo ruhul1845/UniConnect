@@ -28,7 +28,7 @@ export default function Signup() {
       await supabase.from('profiles').upsert([
         {
           id: data.user.id,
-          mail: cleanEmail,
+          university_email: cleanEmail,
           full_name: fullName || cleanEmail.split('@')[0],
           role: 'Student',
           is_cr: false,

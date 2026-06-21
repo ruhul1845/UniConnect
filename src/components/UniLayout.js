@@ -6,10 +6,10 @@ export function PageHero(props) {
   return <PageHeroComponent {...props} />;
 }
 
-export default function UniLayout({ children, session }) {
+export default function UniLayout({ children, session, profile }) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900">
-      <Navbar session={session} />
+      <Navbar session={session} profile={profile} />
 
       <main className="flex-1">
         {children}

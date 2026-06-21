@@ -147,7 +147,7 @@ export default function HomeNotificationFeed() {
                 </div>
             </div>
 
-            <div className="relative h-[410px] overflow-hidden px-4 pb-5">
+            <div className={`relative overflow-hidden px-4 pb-5 ${loading || notifications.length > 3 ? 'h-[410px]' : ''}`}>
                 {loading ? (
                     <div className="space-y-3">
                         {[1, 2, 3, 4].map((item) => (
