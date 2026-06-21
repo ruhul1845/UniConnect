@@ -33,6 +33,8 @@ export default function Marketplace() {
     fetchCategories();
     fetchProducts();
     initUser();
+    // These initialization functions intentionally run once when the marketplace mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function initUser() {
