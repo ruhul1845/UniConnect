@@ -6,6 +6,7 @@ const TABLE_META = {
   resources: { icon: '📚', color: 'blue', label: 'Resource' },
   products: { icon: '🛒', color: 'purple', label: 'Marketplace item' },
   housing_listings: { icon: '🏠', color: 'green', label: 'Housing listing' },
+  sos_events: { icon: '🚨', color: 'red', label: 'Safety alert' },
 };
 
 function getNotificationMeta(tableName) {
@@ -20,14 +21,16 @@ export function formatNotification(row) {
   const meta = getNotificationMeta(row.table_name);
   const itemTitle = row.title || 'Untitled';
 
+  const action = row.action || 'updated';
+
   return {
     id: row.id,
     userId: row.user_id,
     updatedBy: row.updated_by,
     tableName: row.table_name,
     recordId: row.record_id,
-    action: row.action || 'updated',
-    title: `${meta.label} updated`,
+    action,
+    title: `${meta.label} ${action}`,
     description: row.message || `${itemTitle} was updated`,
     itemTitle,
     icon: meta.icon,

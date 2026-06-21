@@ -57,34 +57,56 @@ for insert
 to authenticated
 with check (user_id = auth.uid() or updated_by = auth.uid());
 
--- 3) Trigger function. One clean function for resources, products, housing_listings.
-create or replace function public.create_update_notification()
+-- 3) Broadcast public platform events to every user.
+-- Events performed by an admin are intentionally not broadcast.
+drop function if exists public.create_update_notification();
+create or replace function public.broadcast_platform_notification()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  notify_user uuid;
   actor_user uuid;
+  row_data jsonb;
+  target_id text;
   item_title text;
+  event_action text;
+  event_message text;
 begin
-  if TG_TABLE_NAME = 'resources' then
-    notify_user := NEW.uploaded_by;
-  elsif TG_TABLE_NAME = 'products' then
-    notify_user := NEW.seller_id;
-  elsif TG_TABLE_NAME = 'housing_listings' then
-    notify_user := NEW.user_id;
+  if TG_OP = 'DELETE' then
+    row_data := to_jsonb(OLD);
+    target_id := OLD.id::text;
   else
-    return NEW;
+    row_data := to_jsonb(NEW);
+    target_id := NEW.id::text;
   end if;
 
   actor_user := auth.uid();
-  item_title := coalesce(NEW.title, 'Untitled');
 
-  if notify_user is null then
+  if actor_user is not null and exists (
+    select 1
+    from public.profiles actor
+    where actor.id = actor_user
+      and (lower(coalesce(actor.role, 'student')) = 'admin' or coalesce(actor.is_admin, false))
+  ) then
+    if TG_OP = 'DELETE' then return OLD; end if;
     return NEW;
   end if;
+
+  event_action := case TG_OP when 'INSERT' then 'created' when 'UPDATE' then 'updated' else 'deleted' end;
+  item_title := coalesce(
+    row_data->>'title',
+    row_data->>'file_name',
+    case when TG_TABLE_NAME = 'sos_events' then 'Safety alert' else 'Untitled' end
+  );
+  event_message := case TG_TABLE_NAME
+    when 'resources' then 'Resource "' || item_title || '" was ' || event_action || '.'
+    when 'products' then 'Marketplace item "' || item_title || '" was ' || event_action || '.'
+    when 'housing_listings' then 'Housing listing "' || item_title || '" was ' || event_action || '.'
+    when 'sos_events' then 'A campus safety alert was ' || event_action || '.'
+    else 'A platform item was ' || event_action || '.'
+  end;
 
   insert into public.notifications (
     user_id,
@@ -95,38 +117,49 @@ begin
     title,
     message
   )
-  values (
-    notify_user,
+  select
+    p.id,
     actor_user,
     TG_TABLE_NAME,
-    NEW.id::text,
-    'updated',
+    target_id,
+    event_action,
     item_title,
-    item_title || ' was updated'
-  );
+    event_message
+  from public.profiles p
+  where p.id is not null;
 
+  if TG_OP = 'DELETE' then return OLD; end if;
   return NEW;
 end;
 $$;
 
 -- 4) Triggers.
 drop trigger if exists resources_update_notification on public.resources;
-create trigger resources_update_notification
-after update on public.resources
+drop trigger if exists resources_platform_notification on public.resources;
+create trigger resources_platform_notification
+after insert or update or delete on public.resources
 for each row
-execute function public.create_update_notification();
+execute function public.broadcast_platform_notification();
 
 drop trigger if exists products_update_notification on public.products;
-create trigger products_update_notification
-after update on public.products
+drop trigger if exists products_platform_notification on public.products;
+create trigger products_platform_notification
+after insert or update or delete on public.products
 for each row
-execute function public.create_update_notification();
+execute function public.broadcast_platform_notification();
 
 drop trigger if exists housing_update_notification on public.housing_listings;
-create trigger housing_update_notification
-after update on public.housing_listings
+drop trigger if exists housing_platform_notification on public.housing_listings;
+create trigger housing_platform_notification
+after insert or update or delete on public.housing_listings
 for each row
-execute function public.create_update_notification();
+execute function public.broadcast_platform_notification();
+
+drop trigger if exists sos_platform_notification on public.sos_events;
+create trigger sos_platform_notification
+after insert or update or delete on public.sos_events
+for each row
+execute function public.broadcast_platform_notification();
 
 -- 5) Enable realtime for the notifications table if it is not already enabled.
 do $$
