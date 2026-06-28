@@ -58,7 +58,7 @@ export default function useNotifications(session) {
         },
         (payload) => {
           const notification = formatNotification(payload.new);
-          setNotifications((prev) => [notification, ...prev].slice(0, NOTIFICATION_LIMIT));
+          setNotifications((prev) => [notification, ...prev.filter((item) => item.id !== notification.id)].slice(0, NOTIFICATION_LIMIT));
         }
       )
       .on(
@@ -107,6 +107,7 @@ export default function useNotifications(session) {
     async (notificationId) => {
       if (!userId) return;
 
+      const previousNotifications = notifications;
       setNotifications((prev) =>
         prev.map((item) => (item.id === notificationId ? { ...item, read: true } : item))
       );
@@ -115,22 +116,25 @@ export default function useNotifications(session) {
         await markNotificationAsRead(notificationId, userId);
       } catch (err) {
         console.error('Mark notification read error:', err.message);
+        setNotifications(previousNotifications);
       }
     },
-    [userId]
+    [notifications, userId]
   );
 
   const markAllRead = useCallback(async () => {
     if (!userId) return;
 
+    const previousNotifications = notifications;
     setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
 
     try {
       await markAllNotificationsAsRead(userId);
     } catch (err) {
       console.error('Mark all notifications read error:', err.message);
+      setNotifications(previousNotifications);
     }
-  }, [userId]);
+  }, [notifications, userId]);
 
   const clearAll = useCallback(async () => {
     if (!userId) return;

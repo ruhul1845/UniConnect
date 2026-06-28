@@ -2,7 +2,7 @@ import { RESOURCE_TYPES } from './resourceConstants';
 import { normalizeResourceType } from './resourceHelpers';
 import { GoPin } from "react-icons/go";
 
-export default function ResourceCard({ item, onPreview, onDownload }) {
+export default function ResourceCard({ item, onPreview, onDownload, onDelete }) {
   const type = normalizeResourceType(item.resource_type || item.type);
   const label = RESOURCE_TYPES.find((resourceType) => resourceType.key === type)?.label || type;
 
@@ -39,6 +39,7 @@ export default function ResourceCard({ item, onPreview, onDownload }) {
         <button onClick={onPreview} className="rounded-full border border-blue-100 px-5 py-3 text-sm font-black text-[#18004d] hover:bg-blue-50">
           Preview
         </button>
+        {onDelete && <button onClick={onDelete} className="rounded-full px-4 py-3 text-sm font-bold text-red-700 hover:bg-red-50">Remove</button>}
       </div>
     </article>
   );

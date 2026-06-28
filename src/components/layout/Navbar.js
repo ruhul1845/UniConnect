@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { FaUserCircle } from 'react-icons/fa';
+import { FiLogOut } from 'react-icons/fi';
 import useNotifications from '../../hook/useNotifications';
 import { NotificationPanel, NotificationCenter } from '../NotificationComponents';
 
@@ -20,7 +21,7 @@ export default function Navbar({ session, profile }) {
     const [profileOpen, setProfileOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-    const { notifications, unreadCount, isInitialized, markAllRead, clearAll } = useNotifications(session);
+    const { notifications, unreadCount, isInitialized, markAsRead, markAllRead, clearAll } = useNotifications(session);
     const [toastNotifications, setToastNotifications] = useState([]);
     const previousNotificationIdsRef = useRef(new Set());
     const didLoadInitialNotificationsRef = useRef(false);
@@ -89,9 +90,7 @@ export default function Navbar({ session, profile }) {
                     </button>
 
                     <Link to="/" className="hidden md:flex items-center gap-3 no-underline">
-                        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#18004d] text-sm font-black text-yellow-400 shadow-lg">
-                            UC
-                        </span>
+                        <img src="/logonav.png" alt="UniConnect" className="h-12 w-12 rounded-xl object-contain shadow-md" />
                         <span className="leading-tight">
                             <strong className="block text-lg font-black text-[#18004d]">UniConnect</strong>
                             <small className="text-xs font-semibold text-slate-500">CSE Departmental Hub</small>
@@ -140,7 +139,6 @@ export default function Navbar({ session, profile }) {
                                         onClick={() => {
                                             setNotificationsOpen((prev) => !prev);
                                             setProfileOpen(false);
-                                            markAllRead();
                                         }}
                                         className="relative grid h-11 w-11 place-items-center text-[#18004d] hover:bg-blue-50 rounded-full transition"
                                         title="Notifications"
@@ -157,6 +155,7 @@ export default function Navbar({ session, profile }) {
                                         notifications={notifications}
                                         unreadCount={unreadCount}
                                         onMarkAllRead={markAllRead}
+                                        onMarkRead={markAsRead}
                                         onClearAll={clearAll}
                                         isOpen={notificationsOpen}
                                         onClose={() => setNotificationsOpen(false)}
@@ -173,14 +172,14 @@ export default function Navbar({ session, profile }) {
                                         className="grid h-11 w-11 place-items-center rounded-full text-[#18004d] shadow-sm transition hover:bg-blue-50"
                                         title="Profile"
                                     >
-                                        <FaUserCircle className="text-3xl" />
+                                        {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" /> : <FaUserCircle className="text-3xl" />}
                                     </button>
 
                                     {profileOpen && (
                                         <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-2xl">
                                             <div className="bg-gradient-to-r from-[#061A40] via-[#123C69] to-[#1E88E5] p-5 text-white">
                                                 <div className="grid h-14 w-14 place-items-center rounded-2xl bg-yellow-400 text-[#18004d]">
-                                                    <FaUserCircle className="text-4xl" />
+                                                    {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="h-14 w-14 rounded-2xl object-cover" /> : <FaUserCircle className="text-4xl" />}
                                                 </div>
                                                 <h3 className="mt-3 font-black">{displayName}</h3>
                                                 <p className="mt-1 break-all text-xs text-blue-100">{universityEmail}</p>
@@ -193,6 +192,13 @@ export default function Navbar({ session, profile }) {
                                                     className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
                                                 >
                                                     My Dashboard
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setProfileOpen(false); navigate('/dashboard?view=profile'); }}
+                                                    className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
+                                                >
+                                                    My Profile
                                                 </button>
                                                 {isAdmin && (
                                                     <button
@@ -209,32 +215,10 @@ export default function Navbar({ session, profile }) {
 
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        setProfileOpen(false);
-                                                        navigate('/my-listings');
-                                                    }}
-                                                    className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
-                                                >
-                                                    My Listings
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setProfileOpen(false);
-                                                        navigate('/conversations');
-                                                    }}
-                                                    className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
-                                                >
-                                                    My Chats
-                                                </button>
-
-                                                <button
-                                                    type="button"
                                                     onClick={logout}
-                                                    className="mt-2 w-full rounded-2xl bg-yellow-400 px-4 py-3 text-left text-sm font-black text-[#18004d] hover:bg-yellow-300"
+                                                    className="mt-1 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-bold text-[#18004d] hover:bg-blue-50"
                                                 >
-                                                    Logout
+                                                    <FiLogOut className="text-lg" /> Logout
                                                 </button>
                                             </div>
                                         </div>

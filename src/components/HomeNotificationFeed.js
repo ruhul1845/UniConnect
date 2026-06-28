@@ -132,11 +132,7 @@ export default function HomeNotificationFeed() {
             </style>
 
             <div className="p-6 pb-4">
-                <p className="tracking-[0.35em] text-sm font-black uppercase text-yellow-500">
-                    Official Notices
-                </p>
-
-                <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                     <h3 className="text-xl font-black text-[#18004d]">Latest Updates</h3>
 
                     {notifications.length > 0 && (

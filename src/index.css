@@ -275,7 +275,7 @@
   }
 
   .uc-logo {
-    @apply grid h-11 w-11 place-items-center rounded-2xl bg-uniBlue text-sm font-black text-uniGold shadow-lg;
+    @apply h-12 w-12 rounded-xl bg-white object-contain shadow-lg;
   }
 
   .uc-brand strong {

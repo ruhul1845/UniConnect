@@ -168,6 +168,13 @@ export default function ResourcesPage() {
     anchor.remove();
   }
 
+  async function deleteResource(item) {
+    if (!canUploadResource || !window.confirm(`Remove “${item.title || item.file_name || 'this resource'}” from the library?`)) return;
+    const { error } = await supabase.from('resources').delete().eq('id', item.id);
+    if (error) return alert(`Could not remove resource: ${error.message}`);
+    setResources((current) => current.filter((resource) => resource.id !== item.id));
+  }
+
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
       <main className="mx-auto w-full">
@@ -213,7 +220,7 @@ export default function ResourcesPage() {
           ) : (
             <div className="grid grid-cols-1 gap-7 lg:grid-cols-3 md:grid-cols-2 max-w-7xl mx-auto mb-4">
               {filteredResources.map((item) => (
-                <ResourceCard key={item.id || `${item.title}-${item.created_at}`} item={item} onPreview={() => previewResource(item)} onDownload={() => downloadResource(item)} />
+                <ResourceCard key={item.id || `${item.title}-${item.created_at}`} item={item} onPreview={() => previewResource(item)} onDownload={() => downloadResource(item)} onDelete={canUploadResource ? () => deleteResource(item) : null} />
               ))}
             </div>
           )}

@@ -9,6 +9,15 @@ const TABLE_META = {
   sos_events: { icon: '🚨', color: 'red', label: 'Safety alert' },
 };
 
+const ACTION_TITLES = {
+  resource_approved: 'New academic resource',
+  sos_created: 'SOS alert received',
+  sos_active: 'SOS alert is active',
+  sos_resolved: 'SOS alert resolved',
+  sos_cancelled: 'SOS alert cancelled',
+  removed: 'Listing removed',
+};
+
 function getNotificationMeta(tableName) {
   return TABLE_META[tableName] || {
     icon: '🔔',
@@ -19,9 +28,8 @@ function getNotificationMeta(tableName) {
 
 export function formatNotification(row) {
   const meta = getNotificationMeta(row.table_name);
-  const itemTitle = row.title || 'Untitled';
-
   const action = row.action || 'updated';
+  const notificationTitle = ACTION_TITLES[action] || (action.startsWith('status_') ? `${meta.label} status changed` : `${meta.label} ${action.replaceAll('_', ' ')}`);
 
   return {
     id: row.id,
@@ -30,9 +38,9 @@ export function formatNotification(row) {
     tableName: row.table_name,
     recordId: row.record_id,
     action,
-    title: `${meta.label} ${action}`,
-    description: row.message || `${itemTitle} was updated`,
-    itemTitle,
+    title: notificationTitle,
+    description: row.message || `${row.title || meta.label} was updated`,
+    itemTitle: ACTION_TITLES[action] ? null : row.title,
     icon: meta.icon,
     color: meta.color,
     read: Boolean(row.is_read),
