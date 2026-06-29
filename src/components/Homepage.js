@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { FiArrowLeft, FiArrowRight, FiArrowUpRight, FiBookOpen, FiHome, FiShield, FiShoppingBag } from 'react-icons/fi';
 import HomeNotificationFeed from './HomeNotificationFeed';
 import { supabase } from '../supabaseClient';
 
 const features = [
-  ['📚', 'Academic Resources', 'Batch-wise slides, books, lab sheets, mid-term and final question banks.', '/resources'],
-  ['🛒', 'Student Marketplace', 'Buy and sell hardware, textbooks, software licenses and academic items.', '/marketplace'],
-  ['🏠', 'Housing & To-Let', 'Find flats, sublets and compatible roommates near campus.', '/housing'],
-  ['🚨', 'Safety SOS', 'Emergency contacts, SOS trigger guidance and recent safety alerts.', '/safety'],
+  { icon: FiBookOpen, title: 'Academic Resources', text: 'Batch-wise slides, books, lab sheets, mid-term and final question banks.', link: '/resources', tone: '#4f46e5', metric: 'Archive', image: '/module-images/resources.jpg' },
+  { icon: FiShoppingBag, title: 'Student Marketplace', text: 'Buy and sell hardware, textbooks, software licenses and academic items.', link: '/marketplace', tone: '#7c3aed', metric: 'Trade', image: '/module-images/marketplace.jpg' },
+  { icon: FiHome, title: 'Housing & To-Let', text: 'Find flats, sublets and compatible roommates near campus.', link: '/housing', tone: '#047857', metric: 'Living', image: '/module-images/housing.jpg' },
+  { icon: FiShield, title: 'Safety SOS', text: 'Emergency contacts, SOS trigger guidance and recent safety alerts.', link: '/safety', tone: '#be123c', metric: 'Safety', image: '/module-images/safety.jpg' },
 ];
 
 export default function Homepage({ session }) {
   const [stats, setStats] = useState(null);
   const [statsError, setStatsError] = useState('');
+  const [activeFeature, setActiveFeature] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +53,13 @@ export default function Homepage({ session }) {
     return () => { active = false; };
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveFeature((current) => (current + 1) % features.length);
+    }, 4200);
+    return () => clearInterval(timer);
+  }, []);
+
   const statItems = [
     [stats?.registered_students, 'Registered Students'],
     [stats?.academic_resources, 'Academic Resources'],
@@ -87,23 +96,51 @@ export default function Homepage({ session }) {
       )}
 
       <section className="uc-section">
-        <div className="uc-section-head">
+        <div className="uc-section-head uc-slider-head">
           <div>
             <p className="uc-eyebrow">Quick access</p>
             <h2>Everything students need in one portal</h2>
           </div>
+          <div className="uc-slider-controls" aria-label="Module slider controls">
+            <button type="button" onClick={() => setActiveFeature((activeFeature - 1 + features.length) % features.length)} aria-label="Previous module"><FiArrowLeft /></button>
+            <button type="button" onClick={() => setActiveFeature((activeFeature + 1) % features.length)} aria-label="Next module"><FiArrowRight /></button>
+          </div>
         </div>
-        <div className="uc-grid-4">
-          {features.map(([icon, title, text, link]) => (
-            <Link
-              to={link}
-              className="uc-card py-4 px-5 cursor-pointer transition-all duration-300 hover:shadow-[0_0_20px_rgba(250,204,21,0.35)]"
+        <div className="uc-module-slider" aria-label="UniConnect modules">
+          <div className="uc-module-track" style={{ transform: `translateX(-${activeFeature * 100}%)` }}>
+            {features.map(({ icon: Icon, title, text, link, tone, metric, image }, index) => (
+              <div className="uc-module-slide" key={title}>
+                <Link to={link} className="uc-module-card">
+                  <div className="uc-module-copy">
+                    <div className="uc-module-card-top">
+                      <span className="uc-module-icon" style={{ color: tone, backgroundColor: `${tone}10` }}><Icon /></span>
+                      <span className="uc-module-count">{String(index + 1).padStart(2, '0')}</span>
+                    </div>
+                    <div className="uc-module-body">
+                      <span className="uc-module-label">{metric}</span>
+                      <h3>{title}</h3>
+                      <p>{text}</p>
+                    </div>
+                    <span className="uc-module-link">Open module <FiArrowUpRight /></span>
+                  </div>
+                  <div className="uc-module-photo">
+                    <img src={image} alt="" loading="lazy" />
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="uc-slider-dots" aria-label="Choose module slide">
+          {features.map(({ title }, index) => (
+            <button
+              type="button"
               key={title}
-            >
-              <span className="uc-icon">{icon}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </Link>
+              className={activeFeature === index ? 'active' : ''}
+              onClick={() => setActiveFeature(index)}
+              aria-label={`Show ${title}`}
+              aria-current={activeFeature === index}
+            />
           ))}
         </div>
       </section >

@@ -90,7 +90,7 @@ export default function Navbar({ session, profile }) {
                     </button>
 
                     <Link to="/" className="hidden md:flex items-center gap-3 no-underline">
-                        <img src="/logonav.png" alt="UniConnect" className="h-12 w-12 rounded-xl object-contain shadow-md" />
+                        <img src="/logonav.png" alt="UniConnect" className="h-12 w-12 object-contain" />
                         <span className="leading-tight">
                             <strong className="block text-lg font-black text-[#18004d]">UniConnect</strong>
                             <small className="text-xs font-semibold text-slate-500">CSE Departmental Hub</small>

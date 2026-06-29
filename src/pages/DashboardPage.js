@@ -113,12 +113,20 @@ function DashboardDrawer({ profile, session, role, activeView, onSelect, classNa
   </aside>;
 }
 
-function Overview({ counts, total, activity, loading, role }) {
+function Overview({ counts, total, activity, loading }) {
   return <div className="space-y-7">
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {counts.map(({ key, label, value, icon: Icon, color }) => <div key={key} className="rounded-2xl border border-slate-200 border-t-4 bg-white p-5 shadow-sm" style={{ borderTopColor: color }}>
-        <div className="flex items-center justify-between"><span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100" style={{ color }}><Icon /></span><span className="text-3xl font-bold text-slate-900">{loading ? '–' : value}</span></div>
-        <p className="mt-4 text-sm font-semibold text-slate-600">{label}</p>
+      {counts.map(({ key, label, value, icon: Icon, color }) => <div key={key} className="group relative overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white p-5 shadow-[0_10px_28px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]">
+        <div className="absolute inset-x-0 top-0 h-1.5" style={{ background: `linear-gradient(90deg, ${color}, ${color}88, transparent)` }} />
+        <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full opacity-[0.08]" style={{ backgroundColor: color }} />
+        <div className="flex items-start justify-between gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-50 shadow-inner ring-1 ring-slate-100 transition group-hover:scale-105" style={{ color }}><Icon /></span>
+          <span className="font-serif text-[2rem] font-bold leading-none text-[#070a2d]">{loading ? '–' : value}</span>
+        </div>
+        <div className="mt-5">
+          <p className="text-sm font-bold text-[#26314f]">{label}</p>
+          <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Your total</p>
+        </div>
       </div>)}
     </section>
     <section className="grid gap-7 xl:grid-cols-[1.15fr_.85fr]">
@@ -131,7 +139,6 @@ function Overview({ counts, total, activity, loading, role }) {
         <RecentItems activity={activity} loading={loading} />
       </div>
     </section>
-    {role === 'cr' && <div className="flex flex-col justify-between gap-4 rounded-2xl border border-[#e8d28a] bg-[#fffaf0] p-6 sm:flex-row sm:items-center"><div><h3 className="font-bold text-[#071a3d]">Class representative tools</h3><p className="mt-1 text-sm text-slate-600">Upload resources and remove outdated material from the resource library.</p></div><Link to="/resources" className="rounded-xl bg-[#071a3d] px-5 py-3 text-center text-sm font-bold text-white">Manage resources</Link></div>}
   </div>;
 }
 

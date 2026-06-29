@@ -3,6 +3,7 @@ import { PageHero } from '../components/UniLayout';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { supabase } from '../supabaseClient';
+import { FaRegHandPointRight } from 'react-icons/fa';
 
 const contacts = [
   { name: 'National Emergency', phone: '999' },
@@ -126,7 +127,18 @@ export default function SafetyPage({ session }) {
           <p className="text-xs font-black uppercase tracking-widest text-uniGold">Safety status</p>
           <h2 className="mt-2 text-2xl font-black text-uniBlue">How your alert works</h2>
           <div className="mt-5 space-y-3">
-            {['Hold prevents accidental taps', 'You get 5 seconds to cancel', 'Your available GPS coordinates are stored securely', 'Admins can see and resolve active alerts'].map(t => <div className="rounded-2xl bg-blue-50 p-4 font-semibold text-uniBlue" key={t}>✓ {t}</div>)}
+            {['Hold prevents accidental taps', 'You get 5 seconds to cancel', 'Your available GPS coordinates are stored securely', 'Admins can see and resolve active alerts'].map((t, index) => (
+              <div
+                className="uc-safety-step flex items-center gap-3 rounded-2xl bg-blue-50 p-4 font-semibold text-uniBlue"
+                style={{ animationDelay: `${index * 140}ms` }}
+                key={t}
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[#f0b400] shadow-sm">
+                  <FaRegHandPointRight />
+                </span>
+                <span>{t}</span>
+              </div>
+            ))}
           </div>
           <p className="mt-5 text-sm text-slate-500">SOS does not replace calling emergency services. If you are in immediate danger, call 999.</p>
         </Card>

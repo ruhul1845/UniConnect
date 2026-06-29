@@ -39,7 +39,7 @@ export default function ResourceCard({ item, onPreview, onDownload, onDelete }) 
         <button onClick={onPreview} className="rounded-full border border-blue-100 px-5 py-3 text-sm font-black text-[#18004d] hover:bg-blue-50">
           Preview
         </button>
-        {onDelete && <button onClick={onDelete} className="rounded-full px-4 py-3 text-sm font-bold text-red-700 hover:bg-red-50">Remove</button>}
+        {onDelete && <button onClick={onDelete} className="rounded-full border border-red-200 px-5 py-3 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-50">Remove</button>}
       </div>
     </article>
   );
