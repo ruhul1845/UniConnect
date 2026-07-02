@@ -14,6 +14,7 @@ import Chat from './components/Chat';
 import UniLayout from './components/UniLayout';
 
 import SavedItems from './components/SavedItems';
+import PurchaseHistory from './components/PurchaseHistory';
 import SellerOffers from './components/SellerOffers';
 import ResourcesPage from './pages/ResourcesPage';
 //import HousingPage from './pages/HousingPage';
@@ -244,6 +245,15 @@ function App() {
           element={
             <ProtectedPage session={session}>
               <SavedItems />
+            </ProtectedPage>
+          }
+        />
+
+        <Route
+          path="/purchase-history"
+          element={
+            <ProtectedPage session={session}>
+              <PurchaseHistory />
             </ProtectedPage>
           }
         />

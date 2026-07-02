@@ -68,6 +68,13 @@ export default function SellerOffers() {
           .eq('product_id', productId)
           .eq('status', 'pending')
           .neq('id', offerId);
+
+        // Auto-reserve the product once an offer is accepted (only if still available).
+        await supabase
+          .from('products')
+          .update({ status: 'reserved' })
+          .eq('id', productId)
+          .eq('status', 'available');
       }
 
       setOffers(prev => prev.map(o => {

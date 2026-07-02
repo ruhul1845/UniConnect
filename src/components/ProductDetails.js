@@ -247,7 +247,7 @@ export default function ProductDetails() {
         eyebrow="UniConnect Marketplace"
         title={product.title || 'Product Details'}
         subtitle="Buy safely from verified CSE students with built-in chat and campus pickup."
-        actions={<><button className="uc-btn uc-btn-outline" onClick={() => navigate('/marketplace')}>← Marketplace</button><button className="uc-btn uc-btn-gold" onClick={() => navigate('/conversations')}>My Messages</button></>}
+        actions={<><button className="uc-btn uc-btn-outline" onClick={() => navigate('/marketplace')}>← Marketplace</button><button className="uc-btn uc-btn-gold" onClick={() => navigate(currentUser?.id === product?.seller_id ? `/conversations?product=${id}` : '/conversations')}>My Messages</button></>}
       />
 
       <main className="uc-content">
@@ -309,8 +309,9 @@ export default function ProductDetails() {
                 </div>
               ) : (
                 <div className="uc-card-actions">
+                  <button className="uc-btn uc-btn-gold" onClick={() => navigate(`/conversations?product=${id}`)}>💬 Buyer Messages</button>
                   <button className="uc-btn uc-btn-outline" disabled={updating} onClick={() => updateStatus('reserved')}>Mark Reserved</button>
-                  <button className="uc-btn uc-btn-gold" disabled={updating} onClick={() => updateStatus('sold')}>Mark Sold</button>
+                  <button className="uc-btn uc-btn-outline" disabled={updating} onClick={() => updateStatus('sold')}>Mark Sold</button>
                 </div>
               )}
             </div>
