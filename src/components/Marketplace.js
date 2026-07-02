@@ -26,12 +26,15 @@ export default function Marketplace() {
   const [savedIds, setSavedIds] = useState(new Set());
   const [currentUser, setCurrentUser] = useState(null);
   const [savingId, setSavingId] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('All Items');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchCategories();
     fetchProducts();
     initUser();
+    // These initialization functions intentionally run once when the marketplace mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function initUser() {
@@ -99,7 +102,8 @@ export default function Marketplace() {
     const matchesMinPrice = !filters.minPrice || Number(p.price) >= parseFloat(filters.minPrice);
     const matchesMaxPrice = !filters.maxPrice || Number(p.price) <= parseFloat(filters.maxPrice);
     const matchesCondition = !filters.condition || p.condition === filters.condition;
-    return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice && matchesCondition;
+    const matchesTab = activeCategory === 'All Items' || p.category?.name === activeCategory;
+    return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice && matchesCondition && matchesTab;
   });
 
   const handleFilterChange = (e) => setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -154,7 +158,7 @@ export default function Marketplace() {
         </section>
 
         <div className="uc-tabs">
-          {['All Items', 'Hardware', 'Academic Books', 'Software Licenses', 'Others'].map((x, i) => <button key={x} className={i === 0 ? 'uc-tab active' : 'uc-tab'}>{x}</button>)}
+          {['All Items', 'Hardware', 'Academic Books', 'Software Licenses', 'Others'].map((x) => <button key={x} onClick={() => setActiveCategory(x)} className={activeCategory === x ? 'uc-tab active' : 'uc-tab'}>{x}</button>)}
         </div>
 
         {filteredProducts.length === 0 ? (

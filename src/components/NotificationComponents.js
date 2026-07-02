@@ -94,6 +94,7 @@ export function NotificationPanel({
     notifications,
     unreadCount,
     onMarkAllRead,
+    onMarkRead,
     onClearAll,
     isOpen,
     onClose,
@@ -101,9 +102,9 @@ export function NotificationPanel({
     if (!isOpen) return null;
 
     return (
-        <div className="absolute right-0 mt-3 w-96 rounded-3xl border border-blue-100 bg-white shadow-2xl overflow-hidden">
+        <div className="absolute right-0 mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-blue-100 px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-white">
                 <div>
                     <h3 className="font-black text-[#18004d]">Notifications</h3>
                     {unreadCount > 0 && (
@@ -118,7 +119,7 @@ export function NotificationPanel({
                             onClick={onMarkAllRead}
                             className="text-xs font-bold text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition"
                         >
-                            Mark Read
+                            Mark all read
                         </button>
                         <button
                             onClick={onClearAll}
@@ -140,12 +141,11 @@ export function NotificationPanel({
                 ) : (
                     <div className="divide-y divide-blue-100">
                         {notifications.map((notif) => (
-                            <div
+                            <button
+                                type="button"
+                                onClick={() => !notif.read && onMarkRead?.(notif.id)}
                                 key={notif.id}
-                                className={`p-4 transition ${notif.read
-                                        ? 'bg-white hover:bg-blue-50'
-                                        : 'bg-blue-50 hover:bg-blue-100'
-                                    }`}
+                                className={`w-full p-4 text-left transition ${notif.read ? 'bg-white hover:bg-slate-50' : 'bg-[#f4f7fb] hover:bg-blue-50'}`}
                             >
                                 <div className="flex items-start gap-3">
                                     <span className="text-xl">{notif.icon}</span>
@@ -169,7 +169,7 @@ export function NotificationPanel({
                                         <div className="h-2 w-2 rounded-full bg-blue-600 mt-1" />
                                     )}
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
                 )}

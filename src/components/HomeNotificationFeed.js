@@ -132,11 +132,7 @@ export default function HomeNotificationFeed() {
             </style>
 
             <div className="p-6 pb-4">
-                <p className="tracking-[0.35em] text-sm font-black uppercase text-yellow-500">
-                    Official Notices
-                </p>
-
-                <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                     <h3 className="text-xl font-black text-[#18004d]">Latest Updates</h3>
 
                     {notifications.length > 0 && (
@@ -147,7 +143,7 @@ export default function HomeNotificationFeed() {
                 </div>
             </div>
 
-            <div className="relative h-[410px] overflow-hidden px-4 pb-5">
+            <div className={`relative overflow-hidden px-4 pb-5 ${loading || notifications.length > 3 ? 'h-[410px]' : ''}`}>
                 {loading ? (
                     <div className="space-y-3">
                         {[1, 2, 3, 4].map((item) => (

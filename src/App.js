@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
+import { hasRole } from './auth/roles';
 
 import Login from './components/Login';
 import Signup from './components/Signup';
@@ -12,274 +13,106 @@ import ProductDetails from './components/ProductDetails';
 import Conversations from './components/Conversations';
 import Chat from './components/Chat';
 import UniLayout from './components/UniLayout';
-
 import SavedItems from './components/SavedItems';
 import PurchaseHistory from './components/PurchaseHistory';
 import SellerOffers from './components/SellerOffers';
 import ResourcesPage from './pages/ResourcesPage';
-//import HousingPage from './pages/HousingPage';
 import SafetyPage from './pages/SafetyPage';
 import AdminPage from './pages/AdminPage';
-
-// Housing imports
+import DashboardPage from './pages/DashboardPage';
 import HousingPage from './pages/housing/HousingPage.jsx';
 import HousingDetail from './pages/housing/HousingDetail.jsx';
 import PostHousing from './pages/housing/PostHousing.jsx';
 import MyHousingListings from './pages/housing/MyListings.jsx';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import { needsEmailVerification } from './auth/emailPolicy';
 
-
-function ProtectedPage({ session, children }) {
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return (
-    <UniLayout session={session}>
-      {children}
-    </UniLayout>
-  );
+function LayoutPage({ session, profile, children }) {
+  return <UniLayout session={session} profile={profile}>{children}</UniLayout>;
 }
 
-function PublicOnlyPage({ session, children }) {
-  if (session) {
-    return <Navigate to="/" replace />;
-  }
+function ProtectedPage({ session, profile, children, withLayout = true }) {
+  if (!session) return <Navigate to="/login" replace />;
+  if (needsEmailVerification(profile, session)) return <Navigate to="/verify-email" replace />;
+  return withLayout ? <LayoutPage session={session} profile={profile}>{children}</LayoutPage> : children;
+}
 
+function RoleProtectedPage({ session, profile, allowedRoles, children, withLayout = true }) {
+  if (!session) return <Navigate to="/login" replace />;
+  if (needsEmailVerification(profile, session)) return <Navigate to="/verify-email" replace />;
+  if (!hasRole(profile, allowedRoles)) return <Navigate to="/dashboard" replace />;
+  return withLayout ? <LayoutPage session={session} profile={profile}>{children}</LayoutPage> : children;
+}
+
+function PublicOnlyPage({ session, profile, children }) {
+  if (session) return <Navigate to={needsEmailVerification(profile, session) ? '/verify-email' : hasRole(profile, ['admin']) ? '/admin' : '/dashboard'} replace />;
   return children;
 }
 
-function App() {
+export default function App() {
   const [session, setSession] = useState(undefined);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileVersion, setProfileVersion] = useState(0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
+    return () => subscription.unsubscribe();
   }, []);
 
-  if (session === undefined) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-slate-50">
-        <div className="rounded-3xl border border-blue-100 bg-white px-8 py-6 text-center shadow-xl">
-          <p className="text-sm font-black uppercase tracking-widest text-yellow-500">
-            UniConnect
-          </p>
-          <p className="mt-2 font-bold text-[#18004d]">
-            Loading...
-          </p>
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    let active = true;
+    async function fetchProfile() {
+      if (!session?.user?.id) {
+        setProfile(null);
+        setProfileLoading(false);
+        return;
+      }
+      setProfileLoading(true);
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+      if (!active) return;
+      if (error) console.error('Profile fetch error:', error.message);
+      setProfile(data || { id: session.user.id, university_email: session.user.email, role: 'student' });
+      setProfileLoading(false);
+    }
+    fetchProfile();
+    return () => { active = false; };
+  }, [session, profileVersion]);
+
+  if (session === undefined || (session && profileLoading)) {
+    return <div className="grid min-h-screen place-items-center bg-slate-50"><div className="rounded-3xl border border-blue-100 bg-white px-8 py-6 text-center shadow-xl"><p className="text-sm font-black uppercase tracking-widest text-yellow-500">UniConnect</p><p className="mt-2 font-bold text-[#18004d]">Loading...</p></div></div>;
   }
+
+  const protectedRoute = (page) => <ProtectedPage session={session} profile={profile}>{page}</ProtectedPage>;
 
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={
-            <PublicOnlyPage session={session}>
-              <Login />
-            </PublicOnlyPage>
-          }
-        />
-
-        <Route
-          path="/signup"
-          element={
-            <PublicOnlyPage session={session}>
-              <Signup />
-            </PublicOnlyPage>
-          }
-        />
-
-        <Route
-          path="/"
-          element={
-            <ProtectedPage session={session}>
-              <Homepage />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/resources"
-          element={
-            <ProtectedPage session={session}>
-              <ResourcesPage />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/marketplace"
-          element={
-            <ProtectedPage session={session}>
-              <Marketplace />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/housing"
-          element={
-            <ProtectedPage session={session}>
-              <HousingPage />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/safety"
-          element={
-            <ProtectedPage session={session}>
-              <SafetyPage />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/conversations"
-          element={
-            <ProtectedPage session={session}>
-              <Conversations />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/chat/:conversationId"
-          element={
-            <ProtectedPage session={session}>
-              <Chat />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/product/:id"
-          element={
-            <ProtectedPage session={session}>
-              <ProductDetails />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/sell"
-          element={
-            <ProtectedPage session={session}>
-              <SellItem />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/my-listings"
-          element={
-            <ProtectedPage session={session}>
-              <MyListings />
-            </ProtectedPage>
-          }
-        />
-
-        {/* Housing Routes */}
-
-        <Route
-          path="/housing"
-          element={
-            <ProtectedPage session={session}>
-              <HousingPage />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/housing/post"
-          element={
-            <ProtectedPage session={session}>
-              <PostHousing />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/housing/my-listings"
-          element={
-            <ProtectedPage session={session}>
-              <MyHousingListings />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/housing/edit/:id"
-          element={
-            <ProtectedPage session={session}>
-              <PostHousing />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/housing/:id"
-          element={
-            <ProtectedPage session={session}>
-              <HousingDetail />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/saved-items"
-          element={
-            <ProtectedPage session={session}>
-              <SavedItems />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/purchase-history"
-          element={
-            <ProtectedPage session={session}>
-              <PurchaseHistory />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/offers/:productId"
-          element={
-            <ProtectedPage session={session}>
-              <SellerOffers />
-            </ProtectedPage>
-          }
-        />
-
-        <Route
-          path="/admin"
-          element={
-            <ProtectedPage session={session}>
-              <AdminPage />
-            </ProtectedPage>
-          }
-        />
-
+        <Route path="/login" element={<PublicOnlyPage session={session} profile={profile}><Login /></PublicOnlyPage>} />
+        <Route path="/signup" element={<PublicOnlyPage session={session} profile={profile}><Signup /></PublicOnlyPage>} />
+        <Route path="/verify-email" element={<VerifyEmailPage session={session} profile={profile} onVerified={() => setProfileVersion((value) => value + 1)} />} />
+        <Route path="/" element={<LayoutPage session={session} profile={profile}><Homepage session={session} /></LayoutPage>} />
+        <Route path="/resources" element={protectedRoute(<ResourcesPage />)} />
+        <Route path="/marketplace" element={protectedRoute(<Marketplace />)} />
+        <Route path="/housing" element={protectedRoute(<HousingPage />)} />
+        <Route path="/safety" element={protectedRoute(<SafetyPage session={session} />)} />
+        <Route path="/conversations" element={protectedRoute(<Conversations />)} />
+        <Route path="/chat/:conversationId" element={protectedRoute(<Chat />)} />
+        <Route path="/product/:id" element={protectedRoute(<ProductDetails />)} />
+        <Route path="/sell" element={protectedRoute(<SellItem />)} />
+        <Route path="/my-listings" element={protectedRoute(<MyListings />)} />
+        <Route path="/housing/post" element={protectedRoute(<PostHousing />)} />
+        <Route path="/housing/my-listings" element={protectedRoute(<MyHousingListings />)} />
+        <Route path="/housing/edit/:id" element={protectedRoute(<PostHousing />)} />
+        <Route path="/housing/:id" element={protectedRoute(<HousingDetail />)} />
+        <Route path="/saved-items" element={protectedRoute(<SavedItems />)} />
+        <Route path="/purchase-history" element={protectedRoute(<PurchaseHistory />)} />
+        <Route path="/offers/:productId" element={protectedRoute(<SellerOffers />)} />
+        <Route path="/dashboard" element={<ProtectedPage session={session} profile={profile} withLayout={false}><DashboardPage session={session} profile={profile} onProfileUpdated={() => setProfileVersion((value) => value + 1)} /></ProtectedPage>} />
+        <Route path="/admin" element={<RoleProtectedPage session={session} profile={profile} allowedRoles={['admin']} withLayout={false}><AdminPage session={session} profile={profile} /></RoleProtectedPage>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
-
-export default App;
