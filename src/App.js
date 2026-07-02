@@ -14,6 +14,7 @@ import Conversations from './components/Conversations';
 import Chat from './components/Chat';
 import UniLayout from './components/UniLayout';
 import SavedItems from './components/SavedItems';
+import PurchaseHistory from './components/PurchaseHistory';
 import SellerOffers from './components/SellerOffers';
 import ResourcesPage from './pages/ResourcesPage';
 import SafetyPage from './pages/SafetyPage';
@@ -106,6 +107,7 @@ export default function App() {
         <Route path="/housing/edit/:id" element={protectedRoute(<PostHousing />)} />
         <Route path="/housing/:id" element={protectedRoute(<HousingDetail />)} />
         <Route path="/saved-items" element={protectedRoute(<SavedItems />)} />
+        <Route path="/purchase-history" element={protectedRoute(<PurchaseHistory />)} />
         <Route path="/offers/:productId" element={protectedRoute(<SellerOffers />)} />
         <Route path="/dashboard" element={<ProtectedPage session={session} profile={profile} withLayout={false}><DashboardPage session={session} profile={profile} onProfileUpdated={() => setProfileVersion((value) => value + 1)} /></ProtectedPage>} />
         <Route path="/admin" element={<RoleProtectedPage session={session} profile={profile} allowedRoles={['admin']} withLayout={false}><AdminPage session={session} profile={profile} /></RoleProtectedPage>} />

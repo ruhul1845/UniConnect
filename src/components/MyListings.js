@@ -162,7 +162,6 @@ export default function MyListings() {
                       <div className="uc-card-actions">
                         <button className="uc-btn uc-btn-blue" onClick={() => navigate(`/product/${product.id}`)}>View</button>
                         <button className="uc-btn uc-btn-outline" onClick={() => handleEditStart(product)}>Edit</button>
-                        <button className="uc-btn uc-btn-outline" onClick={() => openProductConversations(product.id)}>Messages</button>
                         <button
                           className={offerCounts[product.id] ? 'uc-btn uc-btn-gold' : 'uc-btn uc-btn-outline'}
                           onClick={() => navigate(`/offers/${product.id}`)}
