@@ -193,26 +193,29 @@ Create React App embeds them during compilation.
 
 ## Screenshots
 
-The supplied captures cover these screens:
+### Homepage
 
-1. Admin dashboard
-2. Homepage
-3. Academic resources
-4. Student marketplace
-5. Housing and to-let finder
-6. Safety and emergency support
+![UniConnect homepage](docs/screenshots/homepage.png)
 
-The image binaries must be committed under `docs/screenshots/` before they can
-be embedded here. Use these filenames so the final Markdown remains stable:
+### Academic Resources
 
-```text
-docs/screenshots/admin-dashboard.png
-docs/screenshots/homepage.png
-docs/screenshots/resources.png
-docs/screenshots/marketplace.png
-docs/screenshots/housing.png
-docs/screenshots/safety.png
-```
+![UniConnect academic resources](docs/screenshots/resources.png)
+
+### Student Marketplace
+
+![UniConnect student marketplace](docs/screenshots/marketplace.png)
+
+### Housing and To-Let Finder
+
+![UniConnect housing and to-let finder](docs/screenshots/housing.png)
+
+### Safety and Emergency Support
+
+![UniConnect safety and emergency support](docs/screenshots/safety.png)
+
+### Admin Dashboard
+
+![UniConnect admin dashboard](docs/screenshots/admin-dashboard.png)
 
 ## Project Structure
 
