@@ -31,8 +31,9 @@ export default function Chat() {
       if (conv.buyer_id !== user.id && conv.seller_id !== user.id) throw new Error('You are not allowed to view this conversation');
       setConversation(conv); setProduct(conv.product);
       const otherUserId = user.id === conv.buyer_id ? conv.seller_id : conv.buyer_id;
-      const { data: profile } = await supabase.from('profiles').select('id, full_name, avatar_url').eq('id', otherUserId).maybeSingle();
-      setOtherUser(profile || { id: otherUserId, full_name: 'User' });
+      const { data: profile } = await supabase.from('profiles').select('id, full_name, university_email, avatar_url').eq('id', otherUserId).maybeSingle();
+      const resolvedName = profile?.full_name || profile?.university_email?.split('@')[0] || 'User';
+      setOtherUser({ id: otherUserId, full_name: resolvedName, avatar_url: profile?.avatar_url });
     } catch (error) { alert('Error loading conversation: ' + error.message); navigate('/marketplace'); }
     finally { setLoading(false); }
   }, [conversationId, navigate]);
@@ -55,11 +56,16 @@ export default function Chat() {
   const sendMessage = async () => {
     if (!newMessage.trim() || !currentUser?.id || !conversationId) return;
     setSending(true);
+    const content = newMessage.trim();
+    setNewMessage('');
     try {
-      const { error } = await supabase.from('messages').insert([{ conversation_id: conversationId, sender_id: currentUser.id, content: newMessage.trim() }]);
-      if (error) throw error; setNewMessage('');
-    } catch (error) { alert('Error sending message: ' + error.message); }
-    finally { setSending(false); }
+      const { data: sent, error } = await supabase.from('messages').insert([{ conversation_id: conversationId, sender_id: currentUser.id, content }]).select().single();
+      if (error) throw error;
+      setMessages(prev => prev.some(m => m.id === sent.id) ? prev : [...prev, sent]);
+    } catch (error) {
+      setNewMessage(content);
+      alert('Error sending message: ' + error.message);
+    } finally { setSending(false); }
   };
 
   if (loading) return <div className="grid min-h-screen place-items-center bg-slate-50 font-black text-uniBlue">Loading chat...</div>;
@@ -67,7 +73,7 @@ export default function Chat() {
 
   return <div className="flex h-screen flex-col bg-slate-50">
     <header className="flex items-center gap-4 border-b border-blue-100 bg-white px-6 py-4 shadow-sm">
-      <Button variant="navy" onClick={() => navigate('/conversations')}>← Back</Button>
+      <Button variant="navy" onClick={() => navigate(currentUser?.id === conversation?.seller_id ? `/conversations?product=${conversation.product_id}` : '/conversations')}>← Back</Button>
       <div className="flex flex-1 items-center justify-between gap-4">
         <div className="flex items-center gap-3"><div className="grid h-12 w-12 place-items-center rounded-full bg-uniGold font-black text-uniBlue">{(otherUser?.full_name || 'U').charAt(0).toUpperCase()}</div><div><h2 className="text-xl font-black text-uniBlue">{otherUser?.full_name || 'Unknown User'}</h2>{product && <p className="text-sm text-slate-500">About: <b>{product.title}</b> — ৳{product.price}</p>}</div></div>
         {product?.images?.[0] && <img className="h-14 w-14 rounded-2xl border-2 border-uniGold object-cover" src={product.images[0].image_url} alt={product.title || 'Product'} />}

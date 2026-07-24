@@ -117,6 +117,7 @@ export default function Marketplace() {
         subtitle="Buy and sell CSE-specific hardware, books, software licenses and academic items with verified seller profiles and in-app chat."
         actions={<>
           <button className="uc-btn uc-btn-outline" onClick={() => navigate('/saved-items')}>♡ Saved Items {savedIds.size > 0 && `(${savedIds.size})`}</button>
+          <button className="uc-btn uc-btn-outline" onClick={() => navigate('/purchase-history')}>🧾 Purchase History</button>
           <button className="uc-btn uc-btn-gold" onClick={() => navigate('/my-listings')}>My Listings</button>
           <button className="uc-btn uc-btn-gold" onClick={() => navigate('/sell')}>Sell an Item</button>
         </>}
