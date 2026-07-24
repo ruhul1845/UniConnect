@@ -1,482 +1,242 @@
-# UniConnect – CSE Departmental Hub
+# UniConnect — CSE Departmental Hub
 
-UniConnect is a React-based university web application designed for the Computer Science & Engineering department. It aims to bring academic resources, student marketplace, housing/to-let support, chat, safety tools, and admin management into one unified digital platform.
+UniConnect is a React and Supabase web application that brings departmental
+resources, a student marketplace, housing listings, chat, safety tools, user
+dashboards, and role-based administration into one portal.
 
-This project is currently under active development. Some modules are completed for UI demonstration, while some functional database-based features are still being implemented.
+> The project is under active development. The UI and main application flows
+> are implemented, but a new Supabase project still needs the application
+> tables, storage buckets, and policies described below.
 
----
+## Features
 
+- University-email signup, login, verification, and protected routes
+- Student and admin dashboards with profile and activity information
+- Filterable academic resources with CR/admin uploads
+- Marketplace listings, saved items, offers, and buyer/seller chat
+- Housing search, posting, editing, and location maps
+- Hold-to-activate SOS alerts with a five-second cancellation window
+- Realtime notifications and role-based admin management
+- Responsive blue, gold, and white university design
 
+## Tech Stack
 
----
+- React 19 and Create React App
+- React Router
+- Tailwind CSS
+- Supabase Auth, Database, Storage, and Realtime
+- React Leaflet and Leaflet
+- Jest and React Testing Library
+- Docker and nginx
 
-## How to Clone and Run the Project
+## Prerequisites
 
-### 1. Clone the Repository
+For local development:
 
-```bash
-git clone https://github.com/ruhul1845/UniConnect.git
-```
+- Node.js 20 or later
+- npm
+- A Supabase project
 
-### 2. Enter the Project Folder
+For the container workflow, install Docker with Docker Compose instead of
+installing Node.js locally.
 
+## Local Setup
 
+1. Clone the repository and enter it:
 
-### 3. Install Dependencies
+   ```bash
+   git clone https://github.com/ruhul1845/UniConnect.git
+   cd UniConnect
+   ```
 
-```bash
-npm install
-```
+2. Install the locked dependencies:
 
-### 4. Create Environment File
+   ```bash
+   npm ci
+   ```
 
-Create a `.env` file in the project root folder.
+3. Copy the environment template:
 
-```env
-REACT_APP_SUPABASE_URL=your_supabase_project_url
-REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Add the URL and anon key from **Supabase Dashboard → Project Settings →
+   API** to `.env`.
+
+5. Complete the [Supabase setup](#supabase-setup).
+
+6. Start the development server:
+
+   ```bash
+   npm start
+   ```
+
+Open [http://localhost:3000](http://localhost:3000). Create React App may offer
+another port if `3000` is already in use.
+
+## Environment Variables
+
+Create `.env` in the repository root. Do not commit this file.
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `REACT_APP_SUPABASE_URL` | Yes | Supabase project URL |
+| `REACT_APP_SUPABASE_ANON_KEY` | Yes | Public Supabase anon key; never use the service-role key in the browser |
+| `REACT_APP_CAMPUS_SECURITY_PHONE` | No | Campus Security telephone link; defaults to `999` |
+| `REACT_APP_MEDICAL_PHONE` | No | Medical Help telephone link; defaults to `999` |
+| `REACT_APP_PROCTOR_PHONE` | No | Proctorial Body telephone link; defaults to `999` |
 
 Example:
 
 ```env
 REACT_APP_SUPABASE_URL=https://your-project.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=your-anon-key
+REACT_APP_CAMPUS_SECURITY_PHONE=999
+REACT_APP_MEDICAL_PHONE=999
+REACT_APP_PROCTOR_PHONE=999
 ```
 
-### 5. Start the Development Server
+All `REACT_APP_*` values are embedded in the browser bundle at build time.
+Restart the development server or rebuild the image after changing them.
 
-```bash
-npm start
-```
+## Supabase Setup
 
-The app will run at:
+1. Create the application's base tables in Supabase. The current frontend uses:
+   `profiles`, `resources`, `categories`, `products`, `product_images`,
+   `saved_items`, `offers`, `conversations`, `messages`, `cr`,
+   `housing_listings`, `notifications`, and `sos_events`.
+2. Create public storage buckets named `avatars`, `resources`, `housing-image`,
+   and `product-images`. The marketplace uploader also checks the legacy
+   `products` and `marketplace-images` bucket names.
+3. In **Supabase Dashboard → SQL Editor**, run
+   [`sql/role_based_access.sql`](sql/role_based_access.sql).
+4. Run [`sql/notifications_setup.sql`](sql/notifications_setup.sql).
+5. Before running the role script, replace its seeded `amin@du.ac.bd` address
+   if a different account should be the initial admin.
+6. In Supabase Authentication settings, disable the global **Confirm email**
+   option. The application and database RPC enforce conditional verification.
+7. In **Authentication → Email Templates → Magic Link**, include
+   `{{ .Token }}` so the verification email contains an OTP.
 
-```bash
-http://localhost:3000
-```
+The `@cs.du.ac.bd` domain is the primary account domain and requires email
+verification. The temporary `@du.ac.bd` testing exception should be removed
+before production. For an existing project that needs its real accounts
+renamed, review and run
+[`sql/migrate_du_accounts_to_cs.sql`](sql/migrate_du_accounts_to_cs.sql) after
+the role script and before creating temporary test users.
 
-If port `3000` is busy, React may run on another port such as:
+More database notes are available in [`sql/README.md`](sql/README.md).
 
-```bash
-http://localhost:3001
-http://localhost:3002
-```
+> A complete baseline schema for every application table is not currently
+> committed. The included role and notification scripts configure and extend
+> existing tables; they do not create the entire application database from an
+> empty Supabase project.
 
----
+## Run, Test, and Build Commands
 
-## Available Routes
-
-| Route | Description |
+| Command | Description |
 |---|---|
-| `/login` | Login page |
-| `/signup` | Signup page |
-| `/` | Homepage |
-| `/resources` | Academic resources page |
-| `/marketplace` | Student marketplace |
-| `/sell` | Sell item page |
-| `/my-listings` | User listed items |
-| `/product/:id` | Product details page |
-| `/conversations` | Chat conversation list |
-| `/chat/:conversationId` | Chat page |
-| `/housing` | Housing & To-Let page |
-| `/safety` | Safety / SOS page |
-| `/admin` | Admin panel |
+| `npm start` | Start the development server |
+| `npm test` | Run Jest in interactive watch mode |
+| `CI=true npm test -- --runInBand` | Run the complete test suite once |
+| `npm run build` | Create an optimized production build in `build/` |
 
----
+The verified non-interactive test command currently runs 3 suites and 7 tests.
 
-## Current Features
+## Docker
 
-### 1. Authentication
-
-The project includes login and signup pages connected with Supabase authentication.
-
-Current auth features:
-
-- User signup
-- User login
-- Session-based routing
-- Protected pages after login
-- Logout from profile dropdown
-
----
-
-### 2. Homepage
-
-The homepage is designed as a modern university-style landing page.
-
-It includes:
-
-- Hero section
-- Feature cards
-- Quick access sections
-- Dummy statistics
-- Dummy notices/events
-- Blue, golden, and white university theme
-
-Some homepage features are currently dummy/demo content for explaining the UI structure. These will be connected to real database records after the full backend/database work is completed.
-
----
-
-### 3. Navbar and Footer
-
-The app has a shared navbar and footer layout.
-
-Navbar includes:
-
-- Home
-- Resources
-- Marketplace
-- Housing & To-Let
-- Safety
-- Chat
-- Notification icon
-- Profile icon
-- Logout option inside profile dropdown
-
-The navbar and footer are reused across the main protected routes.
-
----
-
-### 4. Marketplace
-
-The marketplace module is designed for students to buy and sell department-related items.
-
-Current features:
-
-- Marketplace listing UI
-- Product card UI
-- Product details UI
-- Sell item page
-- My listings page
-- Chat button structure
-- Blue/golden/white design theme
-
-Marketplace is intended for items such as:
-
-- Books
-- Hardware
-- Devices
-- Academic materials
-- Software-related items
-
----
-
-### 5. Chat System
-
-The chat system is designed for communication between buyer and seller.
-
-Current features:
-
-- Conversation list UI
-- Chat page UI
-- Supabase realtime structure
-- Message display and sending logic
-
-This module is connected with Supabase tables, but final behavior depends on correct database table structure and policies.
-
----
-
-### 6. Academic Resources
-
-The resources page is designed for academic materials such as:
-
-- Lecture slides
-- Books
-- Mid-term question papers
-- Final question papers
-- Lab sheets
-- Project resources
-
-Current status:
-
-- Resource UI is designed
-- Resource filters are designed
-- Upload section UI is available for assigned CR/Admin users
-- Resource upload section is not fully connected to the database yet
-- Preview/download will work only after the database and storage connection are fully completed
-
-The final system will allow CR users to upload resources after Admin assigns them as CR.
-
----
-
-### 7. Admin Panel
-
-The admin panel can be accessed manually using:
+Docker Compose builds the React bundle and serves it with nginx:
 
 ```bash
-http://localhost:3000/admin
+cp .env.example .env
+# Fill in the required Supabase values in .env
+docker compose up --build
 ```
 
-or if React runs on another port:
+Open [http://localhost:3004](http://localhost:3004).
+
+Stop the container with:
 
 ```bash
-http://localhost:3002/admin
+docker compose down
 ```
 
-Current admin features:
+The Compose setup passes the Supabase values as image build arguments because
+Create React App embeds them during compilation.
 
-- Admin dashboard UI
-- CR assignment UI
-- Resource management UI
-- Analytics UI structure
+## Application Routes
 
-Important note:
+| Route | Access | Description |
+|---|---|---|
+| `/` | Public | Homepage |
+| `/login` | Public only | Student login |
+| `/signup` | Public only | Student registration |
+| `/verify-email` | Signed in | Email verification |
+| `/dashboard` | Verified user | User dashboard and profile |
+| `/resources` | Verified user | Academic resources |
+| `/marketplace` | Verified user | Student marketplace |
+| `/sell` | Verified user | Create a marketplace listing |
+| `/my-listings` | Verified user | Current user's marketplace listings |
+| `/product/:id` | Verified user | Marketplace item details |
+| `/saved-items` | Verified user | Saved marketplace items |
+| `/offers/:productId` | Verified user | Seller offers for an item |
+| `/conversations` | Verified user | Conversation list |
+| `/chat/:conversationId` | Verified user | Buyer/seller chat |
+| `/housing` | Verified user | Housing and to-let finder |
+| `/housing/post` | Verified user | Create a housing listing |
+| `/housing/my-listings` | Verified user | Current user's housing listings |
+| `/housing/edit/:id` | Verified user | Edit a housing listing |
+| `/housing/:id` | Verified user | Housing listing details |
+| `/safety` | Verified user | SOS and emergency contacts |
+| `/admin` | Admin only | Role-protected admin console |
 
-Currently, Admin access is available by typing `/admin` directly in the browser. Later, Admin access will be restricted so that only verified admin users can access it after login. There will be no public signup for Admin accounts.
+## Screenshots
 
----
+The supplied captures cover these screens:
 
-### 8. CR Role Management
+1. Admin dashboard
+2. Homepage
+3. Academic resources
+4. Student marketplace
+5. Housing and to-let finder
+6. Safety and emergency support
 
-The project includes a CR assignment concept.
-
-Current idea:
-
-- Admin assigns a CR using university email
-- CR information is stored in a `cr` table
-- Resources page checks whether the logged-in user is assigned as CR
-- If the user is CR, upload option becomes visible
-
-Expected CR table structure:
-
-```sql
-id
-name
-university_email
-batch
-created_at
-```
-
-Expected profile matching:
+The image binaries must be committed under `docs/screenshots/` before they can
+be embedded here. Use these filenames so the final Markdown remains stable:
 
 ```text
-profiles.university_email === cr.university_email
+docs/screenshots/admin-dashboard.png
+docs/screenshots/homepage.png
+docs/screenshots/resources.png
+docs/screenshots/marketplace.png
+docs/screenshots/housing.png
+docs/screenshots/safety.png
 ```
 
-This feature is still under development and depends on proper Supabase database setup.
+## Project Structure
 
----
-
-### 9. Housing & To-Let Finder
-
-The Housing & To-Let page is designed for students to find:
-
-- Flats
-- Sublets
-- Shared rooms
-- Roommates
-- CSE-only housing options
-
-Current status:
-
-- UI is designed
-- Listing cards are added
-- Filter UI is added
-- Map preview UI is added
-
-Not completed yet:
-
-- Buttons are not fully functional
-- Housing posting is not connected to database
-- Map/geolocation functionality is not fully implemented
-- Roommate matching is not fully implemented
-
-This module is under development.
-
----
-
-### 10. Safety / SOS System
-
-The Safety page is designed for emergency support.
-
-Planned features:
-
-- SOS panic button
-- Emergency contact list
-- Safety alert UI
-- Recent alert display
-- Location-based emergency broadcast
-
-Current status:
-
-- UI is designed
-- SOS button is shown for demonstration
-
-Not completed yet:
-
-- SOS button is not fully functional
-- Real-time emergency broadcast is not implemented
-- Location/GPS integration is not completed
-- Emergency alert database logic is under development
-
-This module is under development.
-
----
-
-## Database Notes
-
-This project uses Supabase for:
-
-- Authentication
-- Profiles
-- Marketplace
-- Chat
-- Resources
-- CR role management
-- Future SOS and housing modules
-
-Required environment variables:
-
-```env
-REACT_APP_SUPABASE_URL=
-REACT_APP_SUPABASE_ANON_KEY=
+```text
+UniConnect/
+├── public/                 Static assets
+├── sql/                    Supabase role, notification, and migration SQL
+├── src/
+│   ├── auth/               Email and role policies
+│   ├── components/         Shared UI and feature components
+│   ├── hook/               Notification hooks
+│   ├── pages/              Dashboard, resources, safety, and housing pages
+│   └── services/           Notification services
+├── .env.example            Environment variable template
+├── docker-compose.yml      Container configuration
+├── Dockerfile              Production image build
+└── package.json            Dependencies and npm scripts
 ```
 
-Some features require correct Supabase tables and Row Level Security policies.
+## Security Notes
 
-Important tables may include:
-
-- `profiles`
-- `products`
-- `product_images`
-- `conversations`
-- `messages`
-- `resources`
-- `cr`
-- `housing_posts`
-- `sos_events`
-
-Some of these tables may still need to be created or adjusted during development.
-
----
-
-## Vercel Deployment
-
-### 1. Install Vercel CLI
-
-```bash
-npm install -g vercel
-```
-
-### 2. Login to Vercel
-
-```bash
-vercel login
-```
-
-### 3. Add Environment Variables in Vercel
-
-```bash
-vercel env add REACT_APP_SUPABASE_URL production
-vercel env add REACT_APP_SUPABASE_ANON_KEY production
-```
-
-When Vercel asks for values, paste the Supabase URL and Supabase anon key.
-
-### 4. Create `vercel.json`
-
-Create a file named `vercel.json` in the root folder:
-
-```json
-{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
-}
-```
-
-This is required so React Router routes like `/admin`, `/resources`, and `/marketplace` work correctly after deployment.
-
-### 5. Deploy
-
-```bash
-vercel
-```
-
-For production deployment:
-
-```bash
-vercel --prod
-```
-
----
-
-## Tech Stack
-
-- React.js
-- React Router
-- Tailwind CSS
-- Supabase
-- Supabase Auth
-- Supabase Realtime
-- Vercel Deployment
-
----
-
-## Development Status
-
-This project is not fully completed yet.
-
-Completed or partially completed:
-
-- UI design
-- Authentication structure
-- Shared navbar/footer
-- Marketplace UI
-- Chat UI
-- Resources UI
-- Admin UI
-- Housing UI
-- Safety UI
-
-Under development:
-
-- Full resource database upload/download
-- Final CR role management
-- Housing database integration
-- SOS emergency functionality
-- Admin-only protected access
-- Notification system with complete database logic
-- Full production-level Supabase RLS policies
-
----
-
-## Notes for Developers
-
-Before pushing to GitHub, make sure `.env` is not committed.
-
-`.gitignore` should include:
-
-```gitignore
-node_modules
-build
-.env
-.vercel
-```
-
-To push updates:
-
-```bash
-git add .
-git commit -m "Update UniConnect"
-git push origin main
-```
-
-To run locally:
-
-```bash
-npm install
-npm start
-```
-
----
-
-## Project Summary
-
-UniConnect is a departmental platform for CSE students. It is designed to reduce scattered communication by combining resources, marketplace, housing, safety, and student communication tools in one system.
-
-The current version focuses mainly on UI design and basic structure. Full database functionality will be completed step by step.
+- `.env` is ignored by Git and must stay uncommitted.
+- Only the public Supabase anon key belongs in the frontend.
+- Authorization must be enforced with Supabase Row Level Security, not only
+  with React route checks.
+- Replace temporary email-domain exceptions and seeded admin details before a
+  production deployment.
